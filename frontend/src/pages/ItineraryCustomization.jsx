@@ -34,17 +34,10 @@ export default function ItineraryCustomization() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
-  
-  // Smart Location System - Pickup/Dropoff
-  const [locationSettings, setLocationSettings] = useState({});
 
   // Fetch itinerary items from API instead of using hardcoded data
   const { grouped: itineraryItems, loading: itItemsLoading } = useAllItineraryItems();
   const { hotels = [], transport = [], activities = [], meals = [], services = [], room_upgrades = [] } = itineraryItems;
-  
-  // Available pickup locations (common starting points)
-  const pickupLocations = ['Colombo', 'City Center', 'Airport', 'Hotel', 'Train Station', tripLocation];
-  const unique_pickupLocations = [...new Set(pickupLocations)]; // Remove duplicates
 
   // Build a lightweight fallback itinerary using the selected destination & budget
   const buildFallback = (loc, budgetTotal, durStr) => {
@@ -156,6 +149,9 @@ export default function ItineraryCustomization() {
 
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
+  
+  // Smart Pickup/Dropoff Location System
+  const [transportLocations, setTransportLocations] = useState({});
 
   const categories = ['All', 'Cultural', 'Adventure', 'Nature', 'Food', 'Shopping'];
 
@@ -332,13 +328,15 @@ export default function ItineraryCustomization() {
     const previousState = { ...itinerary };
     setUndoStack([...undoStack, previousState]);
 
-    // Auto-set location settings when transport is selected
-    const dayKey = day;
-    setLocationSettings({
-      ...locationSettings,
+    // Smart location auto-fill: set dropoff to trip destination
+    const dayKey = day.replace('day', '');
+    setTransportLocations({
+      ...transportLocations,
       [dayKey]: {
-        pickup: locationSettings[dayKey]?.pickup || 'Colombo',
-        dropoff: tripLocation // Auto-set dropoff to trip destination
+        pickup: tripLocation,
+        dropoff: tripLocation, // Auto-set to trip destination
+        pickupTime: '09:00 AM',
+        dropoffTime: '05:00 PM'
       }
     });
 
@@ -346,29 +344,11 @@ export default function ItineraryCustomization() {
       ...itinerary,
       [day]: {
         ...itinerary[day],
-        transport: newTransport
-      }
-    });
-  };
-
-  // Handle pickup location change
-  const setPickupLocation = (pickup, day) => {
-    setLocationSettings({
-      ...locationSettings,
-      [day]: {
-        ...locationSettings[day],
-        pickup
-      }
-    });
-  };
-
-  // Handle dropoff location change
-  const setDropoffLocation = (dropoff, day) => {
-    setLocationSettings({
-      ...locationSettings,
-      [day]: {
-        ...locationSettings[day],
-        dropoff
+        transport: {
+          ...newTransport,
+          pickup: tripLocation,
+          dropoff: tripLocation
+        }
       }
     });
   };
@@ -385,6 +365,17 @@ export default function ItineraryCustomization() {
     setUndoStack([...undoStack, { itinerary, selectedAddOns: previousState }]);
     
     setSelectedAddOns(selectedAddOns.filter(a => a.id !== addonId));
+  };
+
+  // Smart Pickup/Dropoff Location Update
+  const updateTransportLocation = (dayNumber, field, value) => {
+    setTransportLocations({
+      ...transportLocations,
+      [dayNumber]: {
+        ...transportLocations[dayNumber],
+        [field]: value
+      }
+    });
   };
 
   const undoLastChange = () => {
@@ -894,7 +885,64 @@ export default function ItineraryCustomization() {
             <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-6 mb-6">
               <h3 className="text-lg font-bold text-slate-200 mb-4">Transportation</h3>
               
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              {/* Smart Pickup/Dropoff Location System */}
+              <div className="mb-6 p-4 bg-slate-950 rounded-lg border border-white/10">
+                <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Location Details
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-2">Pickup Location</label>
+                    <input 
+                      type="text"
+                      value={transportLocations[selectedDay]?.pickup || tripLocation}
+                      onChange={(e) => updateTransportLocation(selectedDay, 'pickup', e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/20 rounded-lg text-slate-200 text-sm focus:border-[#BFBD31] focus:outline-none"
+                      placeholder="Enter pickup location"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-2">Dropoff Location</label>
+                    <input 
+                      type="text"
+                      value={transportLocations[selectedDay]?.dropoff || tripLocation}
+                      onChange={(e) => updateTransportLocation(selectedDay, 'dropoff', e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/20 rounded-lg text-slate-200 text-sm focus:border-[#BFBD31] focus:outline-none"
+                      placeholder="Enter dropoff location"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-2">Pickup Time</label>
+                    <input 
+                      type="time"
+                      value={transportLocations[selectedDay]?.pickupTime || '09:00'}
+                      onChange={(e) => updateTransportLocation(selectedDay, 'pickupTime', e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/20 rounded-lg text-slate-200 text-sm focus:border-[#BFBD31] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-2">Dropoff Time</label>
+                    <input 
+                      type="time"
+                      value={transportLocations[selectedDay]?.dropoffTime || '17:00'}
+                      onChange={(e) => updateTransportLocation(selectedDay, 'dropoffTime', e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-900 border border-white/20 rounded-lg text-slate-200 text-sm focus:border-[#BFBD31] focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 p-2 bg-[#BFBD31]/10 border border-[#BFBD31]/20 rounded-lg flex items-start gap-2">
+                  <svg className="w-4 h-4 text-[#BFBD31] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clipRule="evenodd"/>
+                  </svg>
+                  <p className="text-xs text-[#BFBD31]">💡 Pro tip: Dropoff location is automatically set to <strong>{tripLocation}</strong>. Customize as needed!</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
                 {transportOptions.map(transport => (
                   <div 
                     key={transport.id}
@@ -925,62 +973,6 @@ export default function ItineraryCustomization() {
                   </div>
                 ))}
               </div>
-
-              {/* Smart Pickup/Dropoff Location System */}
-              {itinerary[`day${selectedDay}`]?.transport && (
-                <div className="bg-slate-950 border border-white/10 rounded-lg p-4 space-y-4">
-                  <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Set Your Trip Route
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    {/* Pickup Location */}
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-2">📍 Pickup Location</label>
-                      <select 
-                        value={locationSettings[`day${selectedDay}`]?.pickup || 'Colombo'}
-                        onChange={(e) => setPickupLocation(e.target.value, `day${selectedDay}`)}
-                        className="w-full bg-slate-800 text-slate-200 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#BFBD31]/50"
-                      >
-                        <option value="">Select Pickup Location</option>
-                        {unique_pickupLocations.map(loc => (
-                          <option key={loc} value={loc}>{loc}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    {/* Dropoff Location */}
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-2">🎯 Drop Location</label>
-                      <div className="relative">
-                        <input 
-                          type="text"
-                          value={locationSettings[`day${selectedDay}`]?.dropoff || tripLocation}
-                          onChange={(e) => setDropoffLocation(e.target.value, `day${selectedDay}`)}
-                          placeholder="Drop location"
-                          className="w-full bg-slate-800 text-slate-200 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#BFBD31]/50"
-                        />
-                        <span className="absolute right-3 top-2.5 text-xs text-[#BFBD31] font-semibold">Auto-set: {tripLocation}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">💡 Drop location auto-set to your destination: <span className="text-[#BFBD31] font-semibold">{tripLocation}</span></p>
-                    </div>
-
-                    {/* Route Summary */}
-                    <div className="bg-[#BFBD31]/10 border border-[#BFBD31]/30 rounded-lg p-3">
-                      <p className="text-xs text-slate-300">
-                        <span className="text-slate-400">Route: </span>
-                        <span className="font-semibold text-slate-200">{locationSettings[`day${selectedDay}`]?.pickup || 'Colombo'}</span>
-                        <span className="text-[#BFBD31] mx-2">→</span>
-                        <span className="font-semibold text-slate-200">{locationSettings[`day${selectedDay}`]?.dropoff || tripLocation}</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Activities Marketplace */}
