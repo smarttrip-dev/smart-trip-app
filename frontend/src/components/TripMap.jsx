@@ -228,6 +228,7 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center flex-shrink-0 mt-1">
                   <span className="text-xs font-bold text-green-400">A</span>
+                </div>
                 <div>
                   <p className="text-xs font-semibold text-slate-300">Pickup</p>
                   <p className="text-sm text-slate-400">{pickupLocation || tripDestination}</p>
