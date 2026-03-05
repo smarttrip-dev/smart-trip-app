@@ -18,7 +18,7 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState(null);
 
-  // Sri Lankan coordinates mapping
+  // Sri Lankan coordinates mapping (expanded with more locations)
   const locationCoordinates = {
     'Colombo': [6.9271, 80.7789],
     'Kandy': [6.9271, 80.6368],
@@ -34,7 +34,12 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
     'Hikkaduwa': [6.1344, 80.1344],
     'Negombo': [7.2064, 79.8581],
     'Bentota': [6.4281, 80.0061],
-    'Jaffna': [9.6615, 80.7855]
+    'Jaffna': [9.6615, 80.7855],
+    'Gampaha': [7.0896, 80.1313],
+    'Kurunegala': [7.4833, 80.6333],
+    'Matara': [5.7808, 80.5355],
+    'Hambantota': [6.1256, 81.1242],
+    'Mannar': [8.9833, 79.9167]
   };
 
   const getCoordinates = (location) => {
@@ -115,11 +120,10 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
     const mapContainer = document.getElementById('trip-map');
     if (!mapContainer) return;
 
-    // Remove old map instance if exists
+    // Remove old map instance if exists (but continue to reinitialize with new props)
     if (map) {
       map.remove();
       setMap(null);
-      return;
     }
 
     const initializeMapWithRoute = async () => {
