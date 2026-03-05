@@ -430,12 +430,24 @@ export default function LandingPageAlt() {
                     {activities.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {activities.slice(0, 5).map((activity) => {
-                          // Construct full image URL if it's a relative path
-                          const imageUrl = activity.images && activity.images.length > 0 
-                            ? (activity.images[0].startsWith('http') 
-                              ? activity.images[0] 
-                              : `http://localhost:5001${activity.images[0]}`)
-                            : null;
+                          // Construct full image URL
+                          let imageUrl = null;
+                          if (activity.images && activity.images.length > 0) {
+                            const img = activity.images[0];
+                            if (img) {
+                              // If it's an external URL (http/https), use as-is
+                              if (img.startsWith('http')) {
+                                imageUrl = img;
+                              } else {
+                                // If it's a relative path, prepend the API base URL
+                                // Use window.location to handle different environments
+                                const apiBase = window.location.origin.includes('5173') 
+                                  ? 'http://localhost:5001'
+                                  : window.location.origin;
+                                imageUrl = `${apiBase}${img}`;
+                              }
+                            }
+                          }
                           
                           return (
                             <div key={activity._id} className="overflow-hidden rounded-lg border border-white/10 hover:border-[#BFBD31] transition-all hover:shadow-lg">
@@ -447,7 +459,7 @@ export default function LandingPageAlt() {
                                     alt={activity.name}
                                     className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                                     onError={(e) => {
-                                      console.error('Image load error:', imageUrl);
+                                      console.error('Image load failed:', imageUrl);
                                       e.target.style.display = 'none';
                                     }}
                                   />
