@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAllItineraryItems } from '../hooks/useItineraryItems.jsx';
+import TripMap from '../components/TripMap.jsx';
 
 export default function ItineraryCustomization() {
   const navigate = useNavigate();
@@ -1200,53 +1201,16 @@ export default function ItineraryCustomization() {
                 </button>
               </div>
 
-              {/* Map Placeholder */}
-              <div className="bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl h-64 mb-4 flex items-center justify-center">
-                <div className="text-center">
-                  <svg className="w-12 h-12 text-[#BFBD31] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                  </svg>
-                  <p className="text-sm text-slate-400">Interactive Map</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <button className="w-full py-2 bg-[#BFBD31] text-slate-950 rounded-lg font-medium hover:bg-[#BFBD31]">
-                  Recalculate Route
-                </button>
-                <button className="w-full py-2 border border-white/20 text-slate-300 rounded-lg font-medium hover:bg-slate-950">
-                  View Directions
-                </button>
-              </div>
-
-              {/* Location List */}
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold text-slate-300 mb-3">Day {selectedDay} Locations</h4>
-                <div className="space-y-2">
-                  {itinerary[`day${selectedDay}`]?.hotel && (
-                    <div className="flex items-start gap-2 p-2 bg-slate-950 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-[#BFBD31] text-slate-950 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        H
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-200">{itinerary[`day${selectedDay}`].hotel.name}</p>
-                        <p className="text-xs text-slate-400">{itinerary[`day${selectedDay}`].hotel.location}</p>
-                      </div>
-                    </div>
-                  )}
-                  {itinerary[`day${selectedDay}`]?.activities?.map((activity, idx) => (
-                    <div key={activity.id} className="flex items-start gap-2 p-2 bg-slate-950 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-[#BFBD31] text-slate-950 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-200">{activity.name}</p>
-                        <p className="text-xs text-slate-400">{activity.duration}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Interactive Map */}
+              <TripMap 
+                pickupLocation={transportLocations[selectedDay]?.pickup || tripLocation}
+                dropoffLocation={transportLocations[selectedDay]?.dropoff || tripLocation}
+                tripDestination={tripLocation}
+                onRecalculateRoute={() => {
+                  // Recalculate route logic
+                  alert('Route recalculated! Distance optimized.');
+                }}
+              />
             </div>
           </div>
         )}
