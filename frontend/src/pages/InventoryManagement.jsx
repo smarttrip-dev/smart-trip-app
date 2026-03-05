@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import AddInventoryForm from '../components/AddInventoryForm';
+import EditInventoryForm from '../components/EditInventoryForm';
 
 // ── field normalization helpers ─────────────────────────────────────────────
 const TYPE_COLORS = {
@@ -48,6 +49,8 @@ export default function InventoryManagement() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
@@ -184,6 +187,15 @@ export default function InventoryManagement() {
       toast.error('Failed to delete service');
       setShowDeleteConfirm(null);
     }
+  };
+
+  const handleEditService = (service) => {
+    setEditingItem(service);
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = () => {
+    fetchInventory();
   };
 
   const getAvailabilityColor = (status) => {
@@ -539,8 +551,9 @@ export default function InventoryManagement() {
 
                     <div className="grid grid-cols-4 gap-2 mb-3">
                       <button
+                        onClick={() => handleEditService(service)}
                         title="Edit"
-                        className="p-2 border border-white/20 rounded-lg hover:bg-slate-950 text-slate-300"
+                        className="p-2 border border-white/20 rounded-lg hover:bg-slate-950 text-slate-300 hover:text-[#BFBD31] transition-colors"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -690,7 +703,7 @@ export default function InventoryManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button title="Edit" className="text-[#BFBD31] hover:text-purple-700">
+                          <button onClick={() => handleEditService(service)} title="Edit" className="text-[#BFBD31] hover:text-purple-700">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
@@ -764,7 +777,7 @@ export default function InventoryManagement() {
                     <div className="absolute left-[2px] top-[2px] bg-slate-900 border border-white/10 w-5 h-5 rounded-full transition-all peer-checked:translate-x-5"></div>
                   </label>
                   <div className="flex gap-2">
-                    <button className="text-[#BFBD31] hover:text-purple-700">
+                    <button onClick={() => handleEditService(service)} className="text-[#BFBD31] hover:text-purple-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                       </svg>
@@ -834,6 +847,17 @@ export default function InventoryManagement() {
             <AddInventoryForm onClose={() => setShowAddModal(false)} onSubmit={() => { setShowAddModal(false); fetchInventory(); }} />
           </div>
         </div>
+      )}
+
+      {showEditModal && editingItem && (
+        <EditInventoryForm
+          item={editingItem}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingItem(null);
+          }}
+          onSubmit={handleEditSubmit}
+        />
       )}
     </div>
   );
