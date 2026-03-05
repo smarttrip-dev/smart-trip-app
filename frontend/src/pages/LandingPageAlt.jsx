@@ -29,7 +29,14 @@ export default function LandingPageAlt() {
           if (!isNaN(budgetNum)) params.append('maxPrice', budgetNum);
         }
 
-        const response = await axios.get(`/api/inventory/public?${params.toString()}`);
+        const url = `/api/inventory/public?${params.toString()}`;
+        console.log('Fetching from:', url);
+        const response = await axios.get(url);
+        console.log('Response data:', response.data);
+        if (response.data && response.data.length > 0) {
+          console.log('First item:', response.data[0]);
+          console.log('First item images:', response.data[0].images);
+        }
         setActivities(response.data || []);
       } catch (error) {
         console.error('Error fetching activities:', error);
@@ -422,41 +429,51 @@ export default function LandingPageAlt() {
                     </h4>
                     {activities.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {activities.slice(0, 5).map((activity) => (
-                          <div key={activity._id} className="overflow-hidden rounded-lg border border-white/10 hover:border-[#BFBD31] transition-all hover:shadow-lg">
-                            {/* Image Container */}
-                            <div className="relative h-32 bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
-                              {activity.images && activity.images.length > 0 ? (
-                                <img 
-                                  src={activity.images[0]} 
-                                  alt={activity.name}
-                                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600">
-                                  <span className="text-3xl">📸</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Content Container */}
-                            <div className="bg-slate-800/60 p-3">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                  <p className="text-sm font-semibold text-slate-100">{activity.name}</p>
-                                  <p className="text-xs text-slate-400">{activity.location || 'Location not specified'}</p>
-                                </div>
-                                <p className="text-sm font-bold text-[#BFBD31] ml-2">LKR {activity.price.toLocaleString()}</p>
+                        {activities.slice(0, 5).map((activity) => {
+                          // Construct full image URL if it's a relative path
+                          const imageUrl = activity.images && activity.images.length > 0 
+                            ? (activity.images[0].startsWith('http') 
+                              ? activity.images[0] 
+                              : `http://localhost:5001${activity.images[0]}`)
+                            : null;
+                          
+                          return (
+                            <div key={activity._id} className="overflow-hidden rounded-lg border border-white/10 hover:border-[#BFBD31] transition-all hover:shadow-lg">
+                              {/* Image Container */}
+                              <div className="relative h-32 bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
+                                {imageUrl ? (
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={activity.name}
+                                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                                    onError={(e) => {
+                                      console.error('Image load error:', imageUrl);
+                                      e.target.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600">
+                                    <span className="text-3xl">📸</span>
+                                  </div>
+                                )}
                               </div>
-                              {activity.description && (
-                                <p className="text-xs text-slate-400 line-clamp-2">{activity.description}</p>
-                              )}
+                              
+                              {/* Content Container */}
+                              <div className="bg-slate-800/60 p-3">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-semibold text-slate-100">{activity.name}</p>
+                                    <p className="text-xs text-slate-400">{activity.location || 'Location not specified'}</p>
+                                  </div>
+                                  <p className="text-sm font-bold text-[#BFBD31] ml-2">LKR {activity.price.toLocaleString()}</p>
+                                </div>
+                                {activity.description && (
+                                  <p className="text-xs text-slate-400 line-clamp-2">{activity.description}</p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {activities.length > 5 && (
                           <p className="text-xs text-slate-500 text-center py-2">
                             +{activities.length - 5} more activities

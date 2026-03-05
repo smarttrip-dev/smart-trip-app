@@ -227,7 +227,7 @@ export default function AddInventoryForm({ onClose, onSubmit }) {
             <p className="text-slate-500 text-sm">or drag and drop</p>
             <p className="text-slate-600 text-xs mt-1">Up to 10 images, max 5MB each</p>
           </label>
-        </div
+        </div>
 
         {/* Image Previews */}
         {imagePreview.length > 0 && (

@@ -232,13 +232,25 @@ export const getPublicActivities = async (req, res) => {
     }
     
     // Get items with vendor info
-    const items = await InventoryItem.find(filter)
+    let items = await InventoryItem.find(filter)
       .populate('vendor', 'name')
       .sort({ createdAt: -1 })
       .limit(50);
     
+    // Ensure images array is always returned (even if empty)
+    items = items.map(item => ({
+      ...item.toObject(),
+      images: item.images && Array.isArray(item.images) ? item.images : []
+    }));
+    
+    console.log('Public Activities Response:', items.length, 'items returned');
+    if (items.length > 0) {
+      console.log('First item images:', items[0].images);
+    }
+    
     res.json(items);
   } catch (error) {
+    console.error('Error in getPublicActivities:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
