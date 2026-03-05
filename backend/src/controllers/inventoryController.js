@@ -1,5 +1,6 @@
 import InventoryItem from '../models/InventoryItem.js';
 import Vendor from '../models/Vendor.js';
+import { getImageURL } from '../middleware/imageUpload.js';
 
 // Helper: get vendor doc for the current user
 const getVendorForUser = (userId) => Vendor.findOne({ user: userId });
@@ -25,7 +26,25 @@ export const addInventoryItem = async (req, res) => {
   try {
     const vendor = await getVendorForUser(req.user._id);
     if (!vendor) return res.status(404).json({ message: 'Vendor profile not found' });
-    const item = await InventoryItem.create({ ...req.body, vendor: vendor._id });
+    
+    // Handle image upload if present
+    const images = [];
+    if (req.files && Array.isArray(req.files)) {
+      req.files.forEach(file => {
+        images.push(getImageURL(file.filename));
+      });
+    }
+
+    const itemData = {
+      ...req.body,
+      vendor: vendor._id,
+    };
+
+    if (images.length > 0) {
+      itemData.images = images;
+    }
+
+    const item = await InventoryItem.create(itemData);
     res.status(201).json(item);
   } catch (error) {
     res.status(400).json({ message: 'Failed to add item', error: error.message });
@@ -39,9 +58,33 @@ export const updateInventoryItem = async (req, res) => {
   try {
     const vendor = await getVendorForUser(req.user._id);
     if (!vendor) return res.status(404).json({ message: 'Vendor profile not found' });
+    
+    const updateData = { ...req.body };
+
+    // Handle image upload if present
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      const newImages = [];
+      req.files.forEach(file => {
+        newImages.push(getImageURL(file.filename));
+      });
+
+      // If body contains 'replaceImages' flag, replace all images, otherwise append
+      if (req.body.replaceImages === 'true' || req.body.replaceImages === true) {
+        updateData.images = newImages;
+      } else {
+        // Append new images to existing ones
+        const existingItem = await InventoryItem.findOne({ _id: req.params.id, vendor: vendor._id });
+        if (existingItem && existingItem.images) {
+          updateData.images = [...existingItem.images, ...newImages];
+        } else {
+          updateData.images = newImages;
+        }
+      }
+    }
+
     const item = await InventoryItem.findOneAndUpdate(
       { _id: req.params.id, vendor: vendor._id },
-      { $set: req.body },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
     if (!item) return res.status(404).json({ message: 'Item not found' });
@@ -133,6 +176,30 @@ export const deleteInventoryItem = async (req, res) => {
     const item = await InventoryItem.findOneAndDelete({ _id: req.params.id, vendor: vendor._id });
     if (!item) return res.status(404).json({ message: 'Item not found' });
     res.json({ message: 'Item deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Remove an image from an inventory item
+// @route   PUT /api/inventory/:id/remove-image
+// @access  Private (vendor)
+export const removeImageFromItem = async (req, res) => {
+  try {
+    const vendor = await getVendorForUser(req.user._id);
+    if (!vendor) return res.status(404).json({ message: 'Vendor profile not found' });
+
+    const { imageUrl } = req.body;
+    if (!imageUrl) return res.status(400).json({ message: 'Image URL is required' });
+
+    const item = await InventoryItem.findOneAndUpdate(
+      { _id: req.params.id, vendor: vendor._id },
+      { $pull: { images: imageUrl } },
+      { new: true }
+    );
+
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+    res.json(item);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

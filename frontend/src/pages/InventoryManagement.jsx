@@ -22,7 +22,8 @@ const mapItem = (raw) => ({
   id:           raw._id,
   name:         raw.name,
   category:     raw.type ? (raw.type.charAt(0).toUpperCase() + raw.type.slice(1)) : 'Other',
-  image:        TYPE_COLORS[raw.type] || '#667eea',
+  image:        raw.images && raw.images.length > 0 ? raw.images[0] : TYPE_COLORS[raw.type] || '#667eea',
+  images:       raw.images || [],
   rating:       0,
   reviewCount:  0,
   price:        raw.price || 0,
@@ -449,19 +450,36 @@ export default function InventoryManagement() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredServices.map(service => {
               const availColors = getAvailabilityColor(service.availability);
+              const isImageUrl = service.image && service.image.startsWith('/');
               
               return (
                 <div key={service.id} className="bg-slate-900 border border-white/10 rounded-xl shadow-md overflow-hidden hover:shadow-lg hover:border-white/20 transition-all">
-                  <div className="relative h-36 flex flex-col items-center justify-center gap-2" style={{ background: `linear-gradient(135deg, ${service.image}cc, ${service.image}88)` }}>
-                    <span className="text-4xl">
-                      {service.category.toLowerCase() === 'accommodation' ? '🏨'
-                        : service.category.toLowerCase() === 'transport' ? '🚗'
-                        : service.category.toLowerCase() === 'activity'  ? '🎭'
-                        : service.category.toLowerCase() === 'meal'      ? '🍽️'
-                        : service.category.toLowerCase() === 'package'   ? '📦'
-                        : '📋'}
-                    </span>
-                    <p className="text-white font-semibold text-sm px-4 text-center line-clamp-1 drop-shadow">{service.name}</p>
+                  <div className="relative h-36 flex flex-col items-center justify-center gap-2 overflow-hidden bg-slate-800">
+                    {isImageUrl ? (
+                      <img 
+                        src={service.image} 
+                        alt={service.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div style={{ background: `linear-gradient(135deg, ${service.image}cc, ${service.image}88)` }} className="w-full h-full flex items-center justify-center gap-2">
+                        <span className="text-4xl">
+                          {service.category.toLowerCase() === 'accommodation' ? '🏨'
+                            : service.category.toLowerCase() === 'transport' ? '🚗'
+                            : service.category.toLowerCase() === 'activity'  ? '🎭'
+                            : service.category.toLowerCase() === 'meal'      ? '🍽️'
+                            : service.category.toLowerCase() === 'package'   ? '📦'
+                            : '📋'}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {service.images.length > 1 && (
+                      <span className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur px-2 py-1 rounded text-xs text-slate-300 font-semibold">
+                        +{service.images.length - 1} more
+                      </span>
+                    )}
+
                     <input
                       type="checkbox"
                       checked={selectedServices.includes(service.id)}

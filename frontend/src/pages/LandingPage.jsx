@@ -240,7 +240,7 @@ export default function LandingPage() {
             </div>
 
             {/* Quick Search Card */}
-            <div className="w-full max-w-4xl rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md p-6 shadow-2xl">
+            <div className="w-full max-w-7xl rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md p-6 shadow-2xl">
               <p className="text-sm font-semibold text-white mb-4">Quick Search Preview</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
                 {/* Destination Dropdown */}
@@ -329,7 +329,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Search Button */}
-                <div className="lg:col-span-1 flex items-flex-end">
+                <div className="lg:col-span-1 flex items-end pt-1">
                   <button 
                     onClick={handleSearch} 
                     disabled={searching}
@@ -517,7 +517,6 @@ export default function LandingPage() {
                     src={getDestImage(dest)}
                     alt={dest.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={e => { e.target.src = kandyDestImg; }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
                   <div className="absolute bottom-4 left-5 flex items-center gap-2">

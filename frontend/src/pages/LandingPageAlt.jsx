@@ -1,10 +1,12 @@
 ﻿import React, { useState } from 'react';
+import LocationAutocomplete from '../components/LocationAutocomplete';
 
 export default function LandingPageAlt() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [activeDestination, setActiveDestination] = useState(0); // index of highlighted destination
+  const [pickupLocation, setPickupLocation] = useState(null);
 
   const destinations = [
     {
@@ -321,9 +323,16 @@ export default function LandingPageAlt() {
                 </div>
 
                 <div className="space-y-4 mb-6">
+                  <LocationAutocomplete 
+                    value={pickupLocation}
+                    onChange={setPickupLocation}
+                    placeholder="Enter your starting location..."
+                    label="🚩 Pickup Location"
+                  />
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2 font-body">📍 Destination</label>
-                    <select className="bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-6">
+                    <select className="w-full bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-3 text-slate-100">
                       <option>Kandy</option>
                       <option>Galle</option>
                       <option>Ella</option>
@@ -338,7 +347,7 @@ export default function LandingPageAlt() {
                       <input 
                         type="text" 
                         placeholder="LKR 100,000"
-                        className="bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-6"
+                        className="w-full bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500"
                       />
                     </div>
                     <div>
@@ -346,7 +355,7 @@ export default function LandingPageAlt() {
                       <input 
                         type="text" 
                         placeholder="2 Adults"
-                        className="bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-6"
+                        className="w-full bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500"
                       />
                     </div>
                   </div>
@@ -356,7 +365,7 @@ export default function LandingPageAlt() {
                     <input 
                       type="text" 
                       placeholder="Mar 15 - Mar 18, 2025"
-                      className="bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-6"
+                      className="w-full bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500"
                     />
                   </div>
                 </div>
