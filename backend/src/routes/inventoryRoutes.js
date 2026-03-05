@@ -6,11 +6,15 @@ import {
     updateInventoryItem,
     deleteInventoryItem,
     removeImageFromItem,
+    getPublicActivities,
 } from '../controllers/inventoryController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { uploadMultipleImages, handleUploadError } from '../middleware/imageUpload.js';
 
 const router = express.Router();
+
+// Public route - must be before protected routes
+router.get('/public', getPublicActivities);
 
 router.route('/')
     .get(protect, getInventoryItems)

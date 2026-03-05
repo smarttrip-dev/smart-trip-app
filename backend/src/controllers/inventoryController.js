@@ -204,3 +204,41 @@ export const removeImageFromItem = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// @desc    Get public activities/inventory items (no auth required)
+// @route   GET /api/inventory/public
+// @access  Public
+export const getPublicActivities = async (req, res) => {
+  try {
+    const { location, type, maxPrice } = req.query;
+    
+    // Build filter object
+    const filter = { isActive: true };
+    
+    if (location) {
+      // Case-insensitive location search
+      filter.location = { $regex: location, $options: 'i' };
+    }
+    
+    if (type) {
+      filter.type = type;
+    }
+    
+    if (maxPrice) {
+      const price = parseFloat(maxPrice);
+      if (!isNaN(price)) {
+        filter.price = { $lte: price };
+      }
+    }
+    
+    // Get items with vendor info
+    const items = await InventoryItem.find(filter)
+      .populate('vendor', 'name')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

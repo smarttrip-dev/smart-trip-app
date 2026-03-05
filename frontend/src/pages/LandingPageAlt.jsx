@@ -1,12 +1,47 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import LocationAutocomplete from '../components/LocationAutocomplete';
+import axios from 'axios';
 
 export default function LandingPageAlt() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
-  const [activeDestination, setActiveDestination] = useState(0); // index of highlighted destination
+  const [activeDestination, setActiveDestination] = useState(0);
   const [pickupLocation, setPickupLocation] = useState(null);
+  const [budget, setBudget] = useState('');
+  const [activities, setActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
+  // Fetch activities based on location and budget
+  useEffect(() => {
+    const fetchActivities = async () => {
+      if (!pickupLocation && !budget) {
+        setActivities([]);
+        return;
+      }
+
+      setLoadingActivities(true);
+      try {
+        const params = new URLSearchParams();
+        if (pickupLocation) params.append('location', pickupLocation);
+        if (budget) {
+          const budgetNum = parseFloat(budget.replace(/,/g, ''));
+          if (!isNaN(budgetNum)) params.append('maxPrice', budgetNum);
+        }
+
+        const response = await axios.get(`/api/inventory/public?${params.toString()}`);
+        setActivities(response.data || []);
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+        setActivities([]);
+      } finally {
+        setLoadingActivities(false);
+      }
+    };
+
+    const timer = setTimeout(fetchActivities, 500); // 500ms debounce
+    return () => clearTimeout(timer);
+  }, [pickupLocation, budget]);
 
   const destinations = [
     {
@@ -347,6 +382,8 @@ export default function LandingPageAlt() {
                       <input 
                         type="text" 
                         placeholder="LKR 100,000"
+                        value={budget}
+                        onChange={(e) => setBudget(e.target.value)}
                         className="w-full bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-xl rounded-xl p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500"
                       />
                     </div>
@@ -376,6 +413,42 @@ export default function LandingPageAlt() {
                 >
                   ✨ Generate Smart Itinerary
                 </button>
+
+                {/* Show fetched activities if location/budget is entered */}
+                {(pickupLocation || budget) && (
+                  <div className="mt-6 pt-6 border-t border-white/10">
+                    <h4 className="text-sm font-bold text-slate-300 mb-3">
+                      Available Activities {loadingActivities && '(loading...)'}
+                    </h4>
+                    {activities.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {activities.slice(0, 5).map((activity) => (
+                          <div key={activity._id} className="bg-slate-800/40 rounded-lg p-3 hover:bg-slate-700/40 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-slate-100">{activity.name}</p>
+                                <p className="text-xs text-slate-400">{activity.location || 'Location not specified'}</p>
+                              </div>
+                              <p className="text-sm font-bold text-[#BFBD31]">LKR {activity.price.toLocaleString()}</p>
+                            </div>
+                            {activity.description && (
+                              <p className="text-xs text-slate-400 mt-1">{activity.description}</p>
+                            )}
+                          </div>
+                        ))}
+                        {activities.length > 5 && (
+                          <p className="text-xs text-slate-500 text-center py-2">
+                            +{activities.length - 5} more activities
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      !loadingActivities && (
+                        <p className="text-xs text-slate-400">No activities found for your selection</p>
+                      )
+                    )}
+                  </div>
+                )}
 
                 <div className="mt-6 pt-6 border-t border-white/5">
                   <div className="flex items-center justify-between text-sm font-body">
