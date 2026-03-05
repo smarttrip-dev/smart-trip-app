@@ -36,8 +36,8 @@ export default function ItineraryCustomization() {
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
 
-  // Fetch itinerary items from API instead of using hardcoded data
-  const { grouped: itineraryItems, loading: itItemsLoading } = useAllItineraryItems();
+  // Fetch itinerary items from API with location filter
+  const { grouped: itineraryItems, loading: itItemsLoading } = useAllItineraryItems(tripLocation);
   const { hotels = [], transport = [], activities = [], meals = [], services = [], room_upgrades = [] } = itineraryItems;
 
   // Build a lightweight fallback itinerary using the selected destination & budget
@@ -97,9 +97,9 @@ export default function ItineraryCustomization() {
     { id: 't4', type: 'Train', price: 2000, duration: '4.5 hours', comfort: 'Medium' }
   ];
 
-  // Show only activities available at the selected destination
+  // Show only activities available at the selected destination (backend already filters by location)
   const availableActivities = activities
-    .filter(a => a?.available !== false && (!a.location || a.location.toLowerCase() === tripLocation.toLowerCase()))
+    .filter(a => a?.available !== false)
     .map((a, idx) => ({
       id: a?._id || `a${idx}`,
       name: a?.name,

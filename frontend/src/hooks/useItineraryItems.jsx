@@ -78,8 +78,8 @@ export const useItineraryByType = (type) => {
   return { items, loading, error };
 };
 
-// Hook to fetch all itinerary items groupedby type
-export const useAllItineraryItems = () => {
+// Hook to fetch all itinerary items grouped by type, with optional location filter
+export const useAllItineraryItems = (location = null) => {
   const [grouped, setGrouped] = useState({
     hotels: [],
     transport: [],
@@ -95,7 +95,13 @@ export const useAllItineraryItems = () => {
     const fetchAllItems = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/config/itinerary-items');
+        // Build URL with location filter if provided
+        let url = '/api/config/itinerary-items';
+        if (location) {
+          url += `?location=${encodeURIComponent(location)}`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch');
         
         const items = await response.json();
@@ -120,7 +126,7 @@ export const useAllItineraryItems = () => {
     };
 
     fetchAllItems();
-  }, []);
+  }, [location]);
 
   return { grouped, loading, error };
 };
