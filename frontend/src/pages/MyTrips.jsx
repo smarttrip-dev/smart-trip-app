@@ -469,9 +469,27 @@ export default function MyTrips() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
                     <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-slate-900/90 backdrop-blur-sm border border-white/10 text-${status.color}-400`}>
-                        {status.label}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-slate-900/90 backdrop-blur-sm border border-white/10 text-${status.color}-400`}>
+                          {status.label}
+                        </span>
+                        {trip.paymentStatus === 'paid' && (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/90 backdrop-blur-sm border border-green-400 text-green-100 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 3.062v6.218c0 1.262.891 2.348 2.118 2.472V17a2 2 0 01-2 2H5a2 2 0 01-2-2v-.652c1.227-.124 2.118-1.21 2.118-2.472V6.517c0-1.413.894-2.612 2.134-3.062zM12 16a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                            </svg>
+                            Paid
+                          </span>
+                        )}
+                        {trip.paymentStatus === 'unpaid' && trip.status === 'confirmed' && (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/90 backdrop-blur-sm border border-orange-400 text-orange-100 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M8.485 2.495c.673-1.346 2.357-1.346 3.03 0l6.28 12.495c.668 1.34-.36 2.801-1.604 2.801H3.81c-1.216 0-2.141-1.41-1.604-2.801L8.485 2.495zM9 13a1 1 0 102 0 1 1 0 00-2 0z"/>
+                            </svg>
+                            Payment Due
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -528,6 +546,27 @@ export default function MyTrips() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                         <span>Booked on: {trip.bookingDate}</span>
+                      </div>
+                      <div className={`flex items-center gap-2 text-xs mt-2 px-2 py-1.5 rounded-md ${
+                        trip.paymentStatus === 'paid' 
+                          ? 'bg-green-500/20 text-green-300' 
+                          : 'bg-orange-500/20 text-orange-300'
+                      }`}>
+                        {trip.paymentStatus === 'paid' ? (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 3.062v6.218c0 1.262.891 2.348 2.118 2.472V17a2 2 0 01-2 2H5a2 2 0 01-2-2v-.652c1.227-.124 2.118-1.21 2.118-2.472V6.517c0-1.413.894-2.612 2.134-3.062zM12 16a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="font-semibold">Payment Completed ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span className="font-semibold">Payment Pending</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
