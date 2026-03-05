@@ -424,16 +424,31 @@ export default function LandingPageAlt() {
                       <div className="space-y-2 max-h-48 overflow-y-auto">
                         {activities.slice(0, 5).map((activity) => (
                           <div key={activity._id} className="bg-slate-800/40 rounded-lg p-3 hover:bg-slate-700/40 transition-colors">
-                            <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                              {/* Activity Image */}
+                              {activity.images && activity.images.length > 0 ? (
+                                <img 
+                                  src={activity.images[0]} 
+                                  alt={activity.name}
+                                  className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 text-xl">
+                                  🎯
+                                </div>
+                              )}
+                              
+                              {/* Activity Details */}
                               <div className="flex-1">
                                 <p className="text-sm font-semibold text-slate-100">{activity.name}</p>
                                 <p className="text-xs text-slate-400">{activity.location || 'Location not specified'}</p>
+                                {activity.description && (
+                                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">{activity.description}</p>
+                                )}
                               </div>
-                              <p className="text-sm font-bold text-[#BFBD31]">LKR {activity.price.toLocaleString()}</p>
+                              
+                              <p className="text-sm font-bold text-[#BFBD31] flex-shrink-0">LKR {activity.price.toLocaleString()}</p>
                             </div>
-                            {activity.description && (
-                              <p className="text-xs text-slate-400 mt-1">{activity.description}</p>
-                            )}
                           </div>
                         ))}
                         {activities.length > 5 && (
