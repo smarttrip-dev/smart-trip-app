@@ -421,20 +421,28 @@ export default function LandingPageAlt() {
                       Available Activities {loadingActivities && '(loading...)'}
                     </h4>
                     {activities.length > 0 ? (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-3 max-h-56 overflow-y-auto">
                         {activities.slice(0, 5).map((activity) => (
-                          <div key={activity._id} className="bg-slate-800/40 rounded-lg p-3 hover:bg-slate-700/40 transition-colors flex gap-3 items-start">
+                          <div key={activity._id} className="bg-slate-800/40 rounded-lg p-3 hover:bg-slate-700/40 transition-all hover:shadow-lg flex gap-3">
                             {/* Activity Image */}
-                            <div className="flex-shrink-0">
+                            <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400">
                               {activity.images && activity.images.length > 0 ? (
                                 <img 
                                   src={activity.images[0]} 
                                   alt={activity.name}
-                                  className="w-14 h-14 rounded object-cover"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.classList.add('flex', 'items-center', 'justify-center');
+                                    const emoji = document.createElement('span');
+                                    emoji.textContent = '🎯';
+                                    emoji.className = 'text-2xl';
+                                    e.target.parentElement.appendChild(emoji);
+                                  }}
                                 />
                               ) : (
-                                <div className="w-14 h-14 bg-slate-700/50 rounded flex items-center justify-center text-lg">
-                                  📍
+                                <div className="w-full h-full flex items-center justify-center text-2xl">
+                                  🎯
                                 </div>
                               )}
                             </div>
@@ -444,12 +452,14 @@ export default function LandingPageAlt() {
                               <p className="text-sm font-semibold text-slate-100 truncate">{activity.name}</p>
                               <p className="text-xs text-slate-400">{activity.location || 'Location not specified'}</p>
                               {activity.description && (
-                                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{activity.description}</p>
+                                <p className="text-xs text-slate-400 line-clamp-1 mt-1">{activity.description}</p>
                               )}
                             </div>
                             
                             {/* Price */}
-                            <p className="text-sm font-bold text-[#BFBD31] flex-shrink-0">LKR {activity.price.toLocaleString()}</p>
+                            <div className="flex-shrink-0 text-right">
+                              <p className="text-sm font-bold text-[#BFBD31]">LKR {activity.price.toLocaleString()}</p>
+                            </div>
                           </div>
                         ))}
                         {activities.length > 5 && (
