@@ -412,38 +412,7 @@ export default function ItineraryCustomization() {
 
   // Show directions between pickup and dropoff
   const handleViewDirections = () => {
-    const dayData = transportLocations[selectedDay];
-    const pickupLoc = dayData?.pickup || tripLocation;
-    const dropoffLoc = dayData?.dropoff || tripLocation;
-    const pickupTime = dayData?.pickupTime || '09:00';
-    const dropoffTime = dayData?.dropoffTime || '17:00';
-
-    setShowDirections(true);
-
-    // Create directions string
-    const directionsText = `
-📍 TRIP ROUTE DIRECTIONS
-
-START: ${pickupLoc}
-TIME: ${pickupTime}
----
-DESTINATION: ${dropoffLoc}
-ARRIVAL TIME: ${dropoffTime}
-
-🚗 TRANSPORTATION OPTIONS:
-• Private Car: ${itinerary[`day${selectedDay}`]?.transport?.type === 'Private Car' ? '✅ Selected' : 'Available'}
-• Public Bus: Available
-• Train: Available
-• Shared Van: Available
-
-📱 Tips:
-- Confirm pickup location with your driver
-- Bring your booking confirmation
-- Allow 15 mins buffer time
-- Check real-time traffic on Google Maps
-    `;
-
-    alert(directionsText);
+    setShowDirections(!showDirections); // Toggle directions panel
   };
 
   const undoLastChange = () => {
@@ -1269,15 +1238,121 @@ ARRIVAL TIME: ${dropoffTime}
               </div>
 
               {/* Interactive Map */}
-              <TripMap 
-                key={`map-${selectedDay}-${transportLocations[selectedDay]?.pickup}-${transportLocations[selectedDay]?.dropoff}`}
-                pickupLocation={transportLocations[selectedDay]?.pickup || tripLocation}
-                dropoffLocation={transportLocations[selectedDay]?.dropoff || tripLocation}
-                tripDestination={tripLocation}
-                onRecalculateRoute={handleRecalculateRoute}
-                onSetDistance={setRouteDistance}
-                onViewDirections={handleViewDirections}
-              />
+              {!showDirections ? (
+                <TripMap 
+                  key={`map-${selectedDay}-${transportLocations[selectedDay]?.pickup}-${transportLocations[selectedDay]?.dropoff}`}
+                  pickupLocation={transportLocations[selectedDay]?.pickup || tripLocation}
+                  dropoffLocation={transportLocations[selectedDay]?.dropoff || tripLocation}
+                  tripDestination={tripLocation}
+                  onRecalculateRoute={handleRecalculateRoute}
+                  onSetDistance={setRouteDistance}
+                  onViewDirections={handleViewDirections}
+                />
+              ) : (
+                /* Directions Panel */
+                <div className="flex flex-col h-full">
+                  <div className="text-2xl font-bold text-[#BFBD31] mb-4">📍 Trip Directions</div>
+                  
+                  {/* Route Overview */}
+                  <div className="bg-gradient-to-r from-green-500/10 to-red-500/10 border border-white/10 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-green-500/30 border-2 border-green-500 flex items-center justify-center">
+                          <span className="text-xs font-bold text-green-400">A</span>
+                        </div>
+                        <div className="w-1 h-16 bg-gradient-to-b from-green-500 to-red-500 opacity-30"></div>
+                        <div className="w-8 h-8 rounded-full bg-red-500/30 border-2 border-red-500 flex items-center justify-center">
+                          <span className="text-xs font-bold text-red-400">B</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="mb-4">
+                          <p className="text-xs font-semibold text-slate-400 mb-1">START LOCATION</p>
+                          <p className="text-lg font-bold text-slate-100">{transportLocations[selectedDay]?.pickup || tripLocation}</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {transportLocations[selectedDay]?.pickupTime || '09:00'} AM
+                          </p>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <p className="text-xs font-semibold text-slate-400 mb-1">DESTINATION</p>
+                          <p className="text-lg font-bold text-slate-100">{transportLocations[selectedDay]?.dropoff || tripLocation}</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {transportLocations[selectedDay]?.dropoffTime || '17:00'} PM
+                          </p>
+                        </div>
+
+                        <div className="border-t border-white/10 pt-3">
+                          <p className="text-[#BFBD31] font-bold text-lg">{routeDistance || '115'} km</p>
+                          <p className="text-xs text-slate-400">Estimated Distance</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transportation Options */}
+                  <div className="bg-slate-950 border border-white/10 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-bold text-slate-300 mb-3">Selected Transportation</h4>
+                    <div className="bg-slate-900 border border-[#BFBD31]/30 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-200">{itinerary[`day${selectedDay}`]?.transport?.type || 'Private Car'}</p>
+                          <p className="text-xs text-slate-400 mt-1">{itinerary[`day${selectedDay}`]?.transport?.duration || '3.5 hours'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[#BFBD31] font-bold">LKR {itinerary[`day${selectedDay}`]?.transport?.price?.toLocaleString() || '8000'}</p>
+                          <p className="text-xs text-slate-400">{itinerary[`day${selectedDay}`]?.transport?.comfort || 'High'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Travel Tips */}
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clipRule="evenodd"/>
+                      </svg>
+                      Travel Tips
+                    </h4>
+                    <ul className="text-xs text-slate-300 space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-0.5">✓</span>
+                        <span>Confirm pickup location with your driver</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-0.5">✓</span>
+                        <span>Bring your booking confirmation ID</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-0.5">✓</span>
+                        <span>Allow 15 mins buffer time</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400 mt-0.5">✓</span>
+                        <span>Check real-time traffic on Google Maps</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Back Button */}
+                  <button 
+                    onClick={() => setShowDirections(false)}
+                    className="w-full py-2 border border-white/20 text-slate-300 rounded-lg font-medium hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Map
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
