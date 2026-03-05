@@ -329,17 +329,21 @@ export default function ItineraryCustomization() {
     const previousState = { ...itinerary };
     setUndoStack([...undoStack, previousState]);
 
-    // Smart location auto-fill: set dropoff to trip destination
+    // Smart location auto-fill: set dropoff to trip destination (only on first selection)
     const dayKey = day.replace('day', '');
-    setTransportLocations({
-      ...transportLocations,
-      [dayKey]: {
-        pickup: tripLocation,
-        dropoff: tripLocation, // Auto-set to trip destination
-        pickupTime: '09:00 AM',
-        dropoffTime: '05:00 PM'
-      }
-    });
+    
+    // Only set defaults if no location data exists yet
+    if (!transportLocations[dayKey]) {
+      setTransportLocations({
+        ...transportLocations,
+        [dayKey]: {
+          pickup: tripLocation,
+          dropoff: tripLocation,
+          pickupTime: '09:00',
+          dropoffTime: '17:00'
+        }
+      });
+    }
 
     setItinerary({
       ...itinerary,
@@ -347,8 +351,8 @@ export default function ItineraryCustomization() {
         ...itinerary[day],
         transport: {
           ...newTransport,
-          pickup: tripLocation,
-          dropoff: tripLocation
+          pickup: transportLocations[dayKey]?.pickup || tripLocation,
+          dropoff: transportLocations[dayKey]?.dropoff || tripLocation
         }
       }
     });
@@ -370,10 +374,17 @@ export default function ItineraryCustomization() {
 
   // Smart Pickup/Dropoff Location Update
   const updateTransportLocation = (dayNumber, field, value) => {
+    const dayData = transportLocations[dayNumber] || {
+      pickup: tripLocation,
+      dropoff: tripLocation,
+      pickupTime: '09:00',
+      dropoffTime: '17:00'
+    };
+
     setTransportLocations({
       ...transportLocations,
       [dayNumber]: {
-        ...transportLocations[dayNumber],
+        ...dayData,
         [field]: value
       }
     });
