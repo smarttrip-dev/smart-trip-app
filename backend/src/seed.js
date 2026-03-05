@@ -1044,15 +1044,19 @@ async function seed() {
 
   // ─── BOOKINGS (for payment testing) ────────────────────────────────────
   const amayaVendor = vendor2; // Amaya vendor
+  const dunuVendor = vendor1;   // Roshan/Ceylon Journeys vendor
+  const earlsVendor = vendor3;  // Earls Regency vendor
+  
   const bookings = await Booking.insertMany([
+    // Booking 1: Thisara → Amaya Tours, Galle Tour (LKR 45,000)
     {
-      user: user1._id, // Thisara (thisara@example.com)
-      items: [], // Itinerary-based booking
+      user: user1._id,
+      items: [],
       destination: 'Galle & Mirissa 3-Day Tour',
       location: 'Galle, Mirissa',
       duration: '3 Days / 2 Nights',
-      status: 'confirmed', // Already confirmed by vendor
-      paymentStatus: 'unpaid', // Ready for payment
+      status: 'confirmed',
+      paymentStatus: 'unpaid',
       tripDates: {
         startDate: '2026-03-15',
         endDate: '2026-03-17',
@@ -1085,18 +1089,170 @@ async function seed() {
         },
       ],
       vendorNotes: 'Approved by Amaya Tours. Ready for payment.',
-      vendor: amayaVendor._id, // Link booking to vendor for notifications
+      vendor: amayaVendor._id,
+    },
+    
+    // Booking 2: Thisara → Roshan/Ceylon Journeys, Kandy Hill Country (LKR 52,500)
+    {
+      user: user1._id,
+      items: [],
+      destination: 'Kandy Hill Country Explorer - 4 Days',
+      location: 'Kandy, Nuwara Eliya',
+      duration: '4 Days / 3 Nights',
+      status: 'confirmed',
+      paymentStatus: 'unpaid',
+      tripDates: {
+        startDate: '2026-04-10',
+        endDate: '2026-04-13',
+      },
+      pax: {
+        adults: 1,
+        children: 2,
+        infants: 0,
+      },
+      totalCost: 52500,
+      specialRequests: 'Family trip with kids. Need child-friendly activities.',
+      itinerarySummary: [
+        {
+          day: 1,
+          activities: ['Temple of the Tooth', 'Kandy Lake walk'],
+          accommodation: "Earl's Regency Hotel",
+          transport: 'Private car from Colombo',
+        },
+        {
+          day: 2,
+          activities: ['Botanical gardens', 'Spice garden tour'],
+          accommodation: "Earl's Regency Hotel",
+          transport: 'Local jeep tours',
+        },
+        {
+          day: 3,
+          activities: ['Nuwara Eliya town tour', 'Tea plantation visit'],
+          accommodation: 'Alpine Hotel Nuwara Eliya',
+          transport: 'Private car',
+        },
+        {
+          day: 4,
+          activities: ['Gregory Lake, Piduruthalagala hike'],
+          accommodation: 'Alpine Hotel Nuwara Eliya',
+          transport: 'Return to Colombo',
+        },
+      ],
+      vendorNotes: 'Confirmed. Child activities arranged.',
+      vendor: dunuVendor._id,
+    },
+
+    // Booking 3: Nimasha → Amaya Tours, Negombo Beach Resort (LKR 38,000)
+    {
+      user: user2._id,
+      items: [],
+      destination: 'Negombo Beach Relaxation Package',
+      location: 'Negombo',
+      duration: '3 Days / 2 Nights',
+      status: 'confirmed',
+      paymentStatus: 'unpaid',
+      tripDates: {
+        startDate: '2026-03-20',
+        endDate: '2026-03-22',
+      },
+      pax: {
+        adults: 2,
+        children: 0,
+        infants: 0,
+      },
+      totalCost: 38000,
+      specialRequests: 'Honeymoon package with spa treatments please.',
+      itinerarySummary: [
+        {
+          day: 1,
+          activities: ['Beach arrival', 'Welcome dinner'],
+          accommodation: 'Negombo Beach Resort',
+          transport: 'Airport pickup',
+        },
+        {
+          day: 2,
+          activities: ['Coral island snorkeling', 'Sunset cruise', 'Couple spa session'],
+          accommodation: 'Negombo Beach Resort',
+          transport: 'Resort transfers',
+        },
+        {
+          day: 3,
+          activities: ['Local market visit', 'Seafood lunch'],
+          accommodation: 'Negombo Beach Resort',
+          transport: 'Airport dropoff',
+        },
+      ],
+      vendorNotes: 'Special honeymoon package. Complimentary room upgrade.',
+      vendor: amayaVendor._id,
+    },
+
+    // Booking 4: Nimasha → Earls Regency, Cultural Triangle (LKR 62,000)
+    {
+      user: user2._id,
+      items: [],
+      destination: 'Cultural Triangle Heritage Tour - 5 Days',
+      location: 'Anuradhapura, Polannaruwa, Sigiriya',
+      duration: '5 Days / 4 Nights',
+      status: 'confirmed',
+      paymentStatus: 'unpaid',
+      tripDates: {
+        startDate: '2026-05-01',
+        endDate: '2026-05-05',
+      },
+      pax: {
+        adults: 2,
+        children: 1,
+        infants: 0,
+      },
+      totalCost: 62000,
+      specialRequests: 'Interested in ancient history and Buddhist sites.',
+      itinerarySummary: [
+        {
+          day: 1,
+          activities: ['Arrival at Anuradhapura', 'Jetavana temple visit'],
+          accommodation: 'Heritage Hotel Anuradhapura',
+          transport: 'Private car rental',
+        },
+        {
+          day: 2,
+          activities: ['Sri Maha Bodhi', 'Ancient dagobas'],
+          accommodation: 'Heritage Hotel Anuradhapura',
+          transport: 'Private car',
+        },
+        {
+          day: 3,
+          activities: ['Polonnaruwa ancient ruins', 'Gal Vihara statues'],
+          accommodation: 'Heritage Lodge Polonnaruwa',
+          transport: 'Private car',
+        },
+        {
+          day: 4,
+          activities: ['Sigiriya Rock climb', 'Mirror Wall paintings', 'Lion Gate'],
+          accommodation: 'Sigiriya View Resort',
+          transport: 'Private car',
+        },
+        {
+          day: 5,
+          activities: ['Dambulla Cave Temple'],
+          accommodation: 'Sigiriya View Resort',
+          transport: 'Return to Colombo',
+        },
+      ],
+      vendorNotes: 'Expert historical guides arranged. UNESCO sites covered.',
+      vendor: earlsVendor._id,
     },
   ]);
-  console.log('💳 Created 1 bookings (confirmed, awaiting payment)');
+  console.log(`💳 Created ${bookings.length} bookings (all confirmed, awaiting payment)`);
 
   // ─── SUMMARY ──────────────────────────────────────────────────────────────
   console.log('\n✅ Seed complete! Login credentials:');
   console.log('   Admin  : admin@smarttrip.lk        / Admin@123');
-  console.log('   User 1 : thisara@example.com        / User@123  (5 trips, 3 saved, 1 booking ready for payment)');
-  console.log('   User 2 : nimasha@example.com        / User@123  (2 trips, 1 saved)');
-  console.log('   Vendor1: roshan.vendor@example.com  / Vendor@123 (Ceylon Journeys)');
-  console.log('   Vendor2: amaya.vendor@example.com   / Vendor@123 (Amaya Coastal Tours)');
+  console.log('   User 1 : thisara@example.com        / User@123  (2 bookings: LKR 45,000 + LKR 52,500)');
+  console.log('   User 2 : nimasha@example.com        / User@123  (2 bookings: LKR 38,000 + LKR 62,000)');
+  console.log('   Vendor1: roshan.vendor@example.com  / Vendor@123 (Ceylon Journeys - 1 booking)');
+  console.log('   Vendor2: amaya.vendor@example.com   / Vendor@123 (Amaya Coastal Tours - 2 bookings)');
+  console.log('   Vendor3: hotels.earls@example.com   / Vendor@123 (Earls Regency Hotels - 1 booking)');
+  console.log('\n📊 Total to pay: LKR 197,500 across 4 bookings!');
 
   await mongoose.disconnect();
 }
