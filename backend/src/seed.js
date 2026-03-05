@@ -16,6 +16,7 @@ import User from './models/User.js';
 import Vendor from './models/Vendor.js';
 import Trip from './models/Trip.js';
 import SavedTrip from './models/SavedTrip.js';
+import Booking from './models/Booking.js';
 import InventoryItem from './models/InventoryItem.js';
 import ConfigCity from './models/ConfigCity.js';
 import ConfigProvince from './models/ConfigProvince.js';
@@ -38,6 +39,7 @@ async function seed() {
       Vendor.deleteMany({}),
       Trip.deleteMany({}),
       SavedTrip.deleteMany({}),
+      Booking.deleteMany({}),
       InventoryItem.deleteMany({}),
       ConfigCity.deleteMany({}),
       ConfigProvince.deleteMany({}),
@@ -1040,10 +1042,57 @@ async function seed() {
   ]);
   console.log('💾 Created 4 saved trips');
 
+  // ─── BOOKINGS (for payment testing) ────────────────────────────────────
+  const amayaVendor = vendor2; // Amaya vendor
+  const bookings = await Booking.insertMany([
+    {
+      user: user1._id, // Thisara (thisara@example.com)
+      items: [], // Itinerary-based booking
+      destination: 'Galle & Mirissa 3-Day Tour',
+      location: 'Galle, Mirissa',
+      duration: '3 Days / 2 Nights',
+      status: 'confirmed', // Already confirmed by vendor
+      paymentStatus: 'unpaid', // Ready for payment
+      tripDates: {
+        startDate: '2026-03-15',
+        endDate: '2026-03-17',
+      },
+      pax: {
+        adults: 2,
+        children: 0,
+        infants: 0,
+      },
+      totalCost: 45000,
+      specialRequests: 'Please arrange pickup from Galle railway station.',
+      itinerarySummary: [
+        {
+          day: 1,
+          activities: ['Galle Fort tour', 'Sunset at lighthouse'],
+          accommodation: 'The Galle Fort Hotel',
+          transport: 'Private car from airport',
+        },
+        {
+          day: 2,
+          activities: ['Whale watching', 'Sunset cruise'],
+          accommodation: 'The Galle Fort Hotel',
+          transport: 'Private car',
+        },
+        {
+          day: 3,
+          activities: ['Mirissa beach', 'Local fishing village tour'],
+          accommodation: 'Beachfront Villa',
+          transport: 'Return to airport',
+        },
+      ],
+      vendorNotes: 'Approved by Amaya Tours. Ready for payment.',
+    },
+  ]);
+  console.log('💳 Created 1 bookings (confirmed, awaiting payment)');
+
   // ─── SUMMARY ──────────────────────────────────────────────────────────────
   console.log('\n✅ Seed complete! Login credentials:');
   console.log('   Admin  : admin@smarttrip.lk        / Admin@123');
-  console.log('   User 1 : thisara@example.com        / User@123  (5 trips, 3 saved)');
+  console.log('   User 1 : thisara@example.com        / User@123  (5 trips, 3 saved, 1 booking ready for payment)');
   console.log('   User 2 : nimasha@example.com        / User@123  (2 trips, 1 saved)');
   console.log('   Vendor1: roshan.vendor@example.com  / Vendor@123 (Ceylon Journeys)');
   console.log('   Vendor2: amaya.vendor@example.com   / Vendor@123 (Amaya Coastal Tours)');
