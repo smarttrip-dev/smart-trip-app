@@ -14,6 +14,9 @@ L.Icon.Default.mergeOptions({
 export default function TripMap({ pickupLocation, dropoffLocation, tripDestination, onRecalculateRoute, onSetDistance, onViewDirections }) {
   const [map, setMap] = useState(null);
   const [distance, setDistance] = useState(null);
+  const [duration, setDuration] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState(null);
 
   // Sri Lankan coordinates mapping
   const locationCoordinates = {
@@ -39,6 +42,60 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
     return locationCoordinates[normalized] || [6.9271, 80.7789]; // Default to Colombo
   };
 
+  /**
+   * Fetch actual routing data from OpenRouteService
+   * Shows the easiest/fastest route with turn-by-turn directions
+   */
+  const fetchActualRoute = async (start, end) => {
+    try {
+      setRouteLoading(true);
+      setRouteError(null);
+
+      // OpenRouteService API (free tier, no API key required for basic requests)
+      // Format: [longitude, latitude]
+      const apiUrl = `https://api.openrouteservice.org/v2/directions/driving-car?start=${end[1]},${end[0]}&end=${start[1]},${start[0]}`;
+      
+      // Fallback: Use OSRM (Open Source Routing Machine) - completely free, no key needed
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${end[1]},${end[0]};${start[1]},${start[0]}?overview=full&steps=true&geometries=geojson`;
+
+      try {
+        // Try OSRM first (most reliable, free, no auth)
+        const response = await fetch(osrmUrl);
+        if (!response.ok) throw new Error('OSRM service unavailable');
+        
+        const data = await response.json();
+        
+        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const distanceKm = Math.round((route.distance / 1000) * 10) / 10;
+          const durationMinutes = Math.round(route.duration / 60);
+          
+          return {
+            coordinates: route.geometry.coordinates.map(coord => [coord[1], coord[0]]), // Convert to [lat, lng]
+            distance: distanceKm,
+            duration: durationMinutes,
+            steps: route.legs[0]?.steps || []
+          };
+        }
+      } catch (osrmError) {
+        console.warn('OSRM unavailable, falling back to straight line:', osrmError);
+      }
+      
+      // Fallback: return straight line route with haversine distance
+      return {
+        coordinates: [start, end],
+        distance: calculateDistance(start, end),
+        duration: Math.round(calculateDistance(start, end) / 60) // Assume 60 km/h average
+      };
+    } catch (error) {
+      console.error('Error fetching route:', error);
+      setRouteError('Unable to fetch route');
+      return null;
+    } finally {
+      setRouteLoading(false);
+    }
+  };
+
   const calculateDistance = (coord1, coord2) => {
     const R = 6371; // Earth's radius in km
     const dLat = ((coord2[0] - coord1[0]) * Math.PI) / 180;
@@ -50,7 +107,7 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
         Math.sin(dLng / 2) *
         Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round(R * c); // Distance in km
+    return Math.round(R * c * 10) / 10; // Distance in km with 1 decimal
   };
 
   useEffect(() => {
@@ -65,84 +122,108 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
       return;
     }
 
-    // Initialize map
-    const pickupCoords = getCoordinates(pickupLocation || tripDestination);
-    const dropoffCoords = getCoordinates(dropoffLocation || tripDestination);
+    const initializeMapWithRoute = async () => {
+      try {
+        const pickupCoords = getCoordinates(pickupLocation || tripDestination);
+        const dropoffCoords = getCoordinates(dropoffLocation || tripDestination);
 
-    try {
-      const newMap = L.map('trip-map', {
-        center: [(pickupCoords[0] + dropoffCoords[0]) / 2, (pickupCoords[1] + dropoffCoords[1]) / 2],
-        zoom: 9,
-        zoomControl: true,
-        scrollWheelZoom: true,
-      });
+        // Fetch actual route
+        const routeData = await fetchActualRoute(pickupCoords, dropoffCoords);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(newMap);
+        const newMap = L.map('trip-map', {
+          center: [(pickupCoords[0] + dropoffCoords[0]) / 2, (pickupCoords[1] + dropoffCoords[1]) / 2],
+          zoom: 9,
+          zoomControl: true,
+          scrollWheelZoom: true,
+        });
 
-      // Add custom marker icons
-      const pickupIcon = L.divIcon({
-        html: `<div style="background-color: #10B981; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
-        iconSize: [32, 32],
-        className: 'custom-marker'
-      });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19,
+        }).addTo(newMap);
 
-      const dropoffIcon = L.divIcon({
-        html: `<div style="background-color: #EF4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
-        iconSize: [32, 32],
-        className: 'custom-marker'
-      });
+        // Add custom marker icons
+        const pickupIcon = L.divIcon({
+          html: `<div style="background-color: #10B981; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+          iconSize: [32, 32],
+          className: 'custom-marker'
+        });
 
-      // Add markers
-      L.marker(pickupCoords, { icon: pickupIcon })
-        .addTo(newMap)
-        .bindPopup(
-          `<div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">Pickup Location</div><div>${pickupLocation || tripDestination}</div>`,
-          { maxWidth: 200 }
+        const dropoffIcon = L.divIcon({
+          html: `<div style="background-color: #EF4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+          iconSize: [32, 32],
+          className: 'custom-marker'
+        });
+
+        // Add markers
+        L.marker(pickupCoords, { icon: pickupIcon })
+          .addTo(newMap)
+          .bindPopup(
+            `<div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">Pickup Location</div><div>${pickupLocation || tripDestination}</div>`,
+            { maxWidth: 200 }
+          );
+
+        L.marker(dropoffCoords, { icon: dropoffIcon })
+          .addTo(newMap)
+          .bindPopup(
+            `<div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">Dropoff Location</div><div>${dropoffLocation || tripDestination}</div>`,
+            { maxWidth: 200 }
+          );
+
+        // Draw route line with actual path coordinates
+        if (routeData && routeData.coordinates) {
+          L.polyline(routeData.coordinates, {
+            color: '#BFBD31',
+            weight: 4,
+            opacity: 0.85,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(newMap);
+
+          // Update distance and duration
+          setDistance(routeData.distance);
+          setDuration(routeData.duration);
+
+          if (onSetDistance) {
+            onSetDistance(routeData.distance);
+          }
+        } else {
+          // Fallback: straight line
+          const routeLatLngs = [pickupCoords, dropoffCoords];
+          L.polyline(routeLatLngs, {
+            color: '#BFBD31',
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 5'
+          }).addTo(newMap);
+
+          const dist = calculateDistance(pickupCoords, dropoffCoords);
+          setDistance(dist);
+          setDuration(Math.round(dist / 60));
+
+          if (onSetDistance) {
+            onSetDistance(dist);
+          }
+        }
+
+        setMap(newMap);
+
+        // Fit bounds to show both markers with padding
+        const southWest = L.latLng(
+          Math.min(pickupCoords[0], dropoffCoords[0]) - 0.15,
+          Math.min(pickupCoords[1], dropoffCoords[1]) - 0.15
         );
-
-      L.marker(dropoffCoords, { icon: dropoffIcon })
-        .addTo(newMap)
-        .bindPopup(
-          `<div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">Dropoff Location</div><div>${dropoffLocation || tripDestination}</div>`,
-          { maxWidth: 200 }
+        const northEast = L.latLng(
+          Math.max(pickupCoords[0], dropoffCoords[0]) + 0.15,
+          Math.max(pickupCoords[1], dropoffCoords[1]) + 0.15
         );
-
-      // Draw route line
-      const routeLatLngs = [pickupCoords, dropoffCoords];
-      L.polyline(routeLatLngs, {
-        color: '#BFBD31',
-        weight: 3,
-        opacity: 0.8,
-        dashArray: '5, 5'
-      }).addTo(newMap);
-
-      // Calculate and display distance
-      const dist = calculateDistance(pickupCoords, dropoffCoords);
-      setDistance(dist);
-      
-      // Notify parent of distance update
-      if (onSetDistance) {
-        onSetDistance(dist);
+        newMap.fitBounds(L.latLngBounds(southWest, northEast));
+      } catch (error) {
+        console.error('Error initializing map:', error);
       }
+    };
 
-      setMap(newMap);
-
-      // Fit bounds to show both markers
-      const southWest = L.latLng(
-        Math.min(pickupCoords[0], dropoffCoords[0]) - 0.1,
-        Math.min(pickupCoords[1], dropoffCoords[1]) - 0.1
-      );
-      const northEast = L.latLng(
-        Math.max(pickupCoords[0], dropoffCoords[0]) + 0.1,
-        Math.max(pickupCoords[1], dropoffCoords[1]) + 0.1
-      );
-      newMap.fitBounds(L.latLngBounds(southWest, northEast));
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
+    initializeMapWithRoute();
 
     return () => {
       // Cleanup will be handled on next effect run
@@ -153,10 +234,32 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
     <div className="flex flex-col h-full">
       <div id="trip-map" style={{ height: '300px', borderRadius: '8px', marginBottom: '12px' }} className="z-10"></div>
       
+      {routeLoading && (
+        <div className="mb-3 p-3 bg-slate-950 border border-white/10 rounded-lg text-center">
+          <p className="text-xs text-slate-400">🔄 Calculating fastest route...</p>
+        </div>
+      )}
+
+      {routeError && (
+        <div className="mb-3 p-3 bg-red-950/30 border border-red-500/30 rounded-lg">
+          <p className="text-xs text-red-400">{routeError}</p>
+        </div>
+      )}
+      
       {distance && (
         <div className="mb-3 p-3 bg-slate-950 border border-white/10 rounded-lg">
-          <p className="text-xs text-slate-400 mb-1">Estimated Distance</p>
-          <p className="text-lg font-bold text-[#BFBD31]">{distance} km</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-xs text-slate-400 mb-1">Estimated Distance</p>
+              <p className="text-lg font-bold text-[#BFBD31]">{distance} km</p>
+            </div>
+            {duration && (
+              <div className="text-right">
+                <p className="text-xs text-slate-400 mb-1">Estimated Time</p>
+                <p className="text-lg font-bold text-[#BFBD31]">{duration} min</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
