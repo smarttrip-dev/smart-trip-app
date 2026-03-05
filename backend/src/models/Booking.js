@@ -56,6 +56,11 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vendor',
+      default: null,
+    },
   },
   { timestamps: true }
 );

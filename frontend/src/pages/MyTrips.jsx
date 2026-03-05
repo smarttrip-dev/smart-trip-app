@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import PaymentModal from '../components/PaymentModal';
 
 export default function MyTrips() {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export default function MyTrips() {
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [dateFilter, setDateFilter] = useState({ from: '', to: '' });
   const [cancelConfirm, setCancelConfirm] = useState({ show: false, tripId: null, tripName: '' });
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentTrip, setSelectedPaymentTrip] = useState(null);
 
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -551,17 +554,8 @@ export default function MyTrips() {
                                 },
                               });
                             } else if (action.id === 'pay') {
-                              if (!confirm(`Pay LKR ${trip.totalCost.toLocaleString()} for your trip to ${trip.destination}?`)) return;
-                              try {
-                                const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-                                await axios.patch(`/api/bookings/${trip.id}/pay`, {}, {
-                                  headers: { Authorization: `Bearer ${userInfo.token}` }
-                                });
-                                setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, paymentStatus: 'paid' } : t));
-                                toast.success('Payment successful! Your trip is confirmed. 🎉');
-                              } catch (err) {
-                                toast.error(err.response?.data?.message || 'Payment failed. Please try again.');
-                              }
+                              setSelectedPaymentTrip(trip);
+                              setShowPaymentModal(true);
                             } else if (action.id === 'book-again') {
                               navigate('/plan-trip');
                             } else if (action.id === 'review') {
@@ -661,6 +655,18 @@ export default function MyTrips() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {selectedPaymentTrip && (
+        <PaymentModal
+          trip={selectedPaymentTrip}
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => {
+            setTrips(prev => prev.map(t => t.id === selectedPaymentTrip.id ? { ...t, paymentStatus: 'paid' } : t));
+          }}
+        />
       )}
     </div>
   );

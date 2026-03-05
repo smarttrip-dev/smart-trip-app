@@ -297,8 +297,11 @@ export const payBooking = async (req, res) => {
     booking.paymentStatus = 'paid';
     await booking.save();
 
-    // Notify user of successful payment
+    // Get user info for notification
+    const user = await booking.populate('user', 'name email');
     const destination = booking.destination || 'your trip';
+
+    // Notify user of successful payment
     await createNotification({
       userId: booking.user,
       type: 'payment_received',
@@ -306,6 +309,38 @@ export const payBooking = async (req, res) => {
       message: `Your payment of LKR ${booking.totalCost.toLocaleString()} for "${destination}" has been received. Your trip is now fully booked!`,
       bookingId: booking._id,
     });
+
+    // Notify vendor(s) about payment received
+    let vendorIds = [];
+    
+    // Add explicit vendor if set (for itinerary bookings)
+    if (booking.vendor) {
+      vendorIds.push(booking.vendor.toString());
+    }
+    
+    // Add vendors from inventory items
+    if (booking.items && booking.items.length > 0) {
+      const inventoryIds = booking.items.map(item => item.inventory).filter(id => id);
+      const inventories = await InventoryItem.find({ _id: { $in: inventoryIds } })
+        .select('vendor')
+        .lean();
+      const itemVendorIds = inventories.map(inv => inv.vendor.toString());
+      vendorIds = [...new Set([...vendorIds, ...itemVendorIds])]; // Remove duplicates
+    }
+
+    // Send notification to each vendor
+    for (const vendorId of vendorIds) {
+      const vendor = await Vendor.findById(vendorId).select('user');
+      if (vendor) {
+        await createNotification({
+          userId: vendor.user,
+          type: 'payment_received',
+          title: '💰 Payment Received',
+          message: `Payment of LKR ${booking.totalCost.toLocaleString()} from ${user.user?.name || 'Customer'} for booking "${destination}" has been successfully received.`,
+          bookingId: booking._id,
+        });
+      }
+    }
 
     res.json(booking);
   } catch (err) {

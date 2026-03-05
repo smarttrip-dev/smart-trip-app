@@ -1085,6 +1085,7 @@ async function seed() {
         },
       ],
       vendorNotes: 'Approved by Amaya Tours. Ready for payment.',
+      vendor: amayaVendor._id, // Link booking to vendor for notifications
     },
   ]);
   console.log('💳 Created 1 bookings (confirmed, awaiting payment)');
