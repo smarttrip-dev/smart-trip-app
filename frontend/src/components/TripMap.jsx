@@ -101,66 +101,64 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
         maxZoom: 19,
       }).addTo(newMap);
 
-      // Add routing control with turn-by-turn directions
-      const routing = LRM.Routing.control({
-        waypoints: [
-          L.latLng(pickupCoords[0], pickupCoords[1]),
-          L.latLng(dropoffCoords[0], dropoffCoords[1])
-        ],
-        router: LRM.osrmv1({
-          serviceUrl: 'https://router.project-osrm.org/route/v1'
-        }),
-        lineOptions: {
-          styles: [
-            { color: '#BFBD31', opacity: 1, weight: 5 }
-          ]
-        },
-        showAlternatives: false,
-        altLineOptions: {
-          styles: [
-            { color: '#000', opacity: 0.15, weight: 5 }
-          ]
-        }
-      }).addTo(newMap);
+      // Calculate distance first
+      const dist = calculateDistance(pickupCoords, dropoffCoords);
+      setDistance(dist);
+      if (onSetDistance) {
+        onSetDistance(dist);
+      }
 
-      // Get routing response data for directions
-      routing.on('routesfound', function (e) {
-        const routes = e.routes;
-        if (routes && routes.length > 0) {
-          const route = routes[0];
-          
-          // Get distance in km
-          const distKm = Math.round(route.summary.totalDistance / 1000);
-          setDistance(distKm);
-          
-          if (onSetDistance) {
-            onSetDistance(distKm);
+      // Try routing with OSRM
+      try {
+        const routing = LRM.Routing.control({
+          waypoints: [
+            L.latLng(pickupCoords[0], pickupCoords[1]),
+            L.latLng(dropoffCoords[0], dropoffCoords[1])
+          ],
+          router: LRM.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1'
+          }),
+          lineOptions: {
+            styles: [
+              { color: '#BFBD31', opacity: 1, weight: 5 }
+            ]
+          },
+          showAlternatives: false,
+          altLineOptions: {
+            styles: [
+              { color: '#000', opacity: 0.15, weight: 5 }
+            ]
           }
+        }).addTo(newMap);
 
-          // Parse instructions for turn-by-turn directions
-          if (route.instructions) {
-            const directionSteps = route.instructions.map((instruction, idx) => ({
-              step: idx + 1,
-              text: instruction.text || `Continue for ${instruction.distance}m`,
-              distance: instruction.distance,
-              time: instruction.time,
-              icon: getDirectionIcon(instruction.type)
-            }));
-            setDirections(directionSteps);
+        // Get routing response data for directions
+        routing.on('routesfound', function (e) {
+          const routes = e.routes;
+          if (routes && routes.length > 0) {
+            const route = routes[0];
+            
+            // Parse instructions for turn-by-turn directions
+            if (route.instructions) {
+              const directionSteps = route.instructions.map((instruction, idx) => ({
+                step: idx + 1,
+                text: instruction.text || `Continue for ${instruction.distance}m`,
+                distance: instruction.distance,
+                time: instruction.time,
+                icon: getDirectionIcon(instruction.type)
+              }));
+              setDirections(directionSteps);
+            }
           }
-        }
-      });
+        });
 
-      // Fallback if routing fails
-      routing.on('routingerror', function (e) {
-        console.warn('Routing error:', e);
-        // Draw straight line as fallback
-        const dist = calculateDistance(pickupCoords, dropoffCoords);
-        setDistance(dist);
-        if (onSetDistance) {
-          onSetDistance(dist);
-        }
-      });
+        routing.on('routingerror', function (e) {
+          console.warn('OSRM routing unavailable, using fallback');
+          addFallbackRoute(newMap, pickupCoords, dropoffCoords);
+        });
+      } catch (routingError) {
+        console.warn('Routing error:', routingError);
+        addFallbackRoute(newMap, pickupCoords, dropoffCoords);
+      }
 
       setMap(newMap);
 
@@ -182,6 +180,49 @@ export default function TripMap({ pickupLocation, dropoffLocation, tripDestinati
       // Cleanup will be handled on next effect run
     };
   }, [pickupLocation, dropoffLocation, tripDestination]);
+
+  const addFallbackRoute = (newMap, pickupCoords, dropoffCoords) => {
+    // Add custom marker icons
+    const pickupIcon = L.divIcon({
+      html: `<div style="background-color: #10B981; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+      iconSize: [32, 32],
+      className: 'custom-marker'
+    });
+
+    const dropoffIcon = L.divIcon({
+      html: `<div style="background-color: #EF4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+      iconSize: [32, 32],
+      className: 'custom-marker'
+    });
+
+    // Add markers
+    L.marker(pickupCoords, { icon: pickupIcon })
+      .addTo(newMap)
+      .bindPopup(`<div style="font-weight: bold;">Pickup Location</div><div>${pickupLocation || tripDestination}</div>`);
+
+    L.marker(dropoffCoords, { icon: dropoffIcon })
+      .addTo(newMap)
+      .bindPopup(`<div style="font-weight: bold;">Dropoff Location</div><div>${dropoffLocation || tripDestination}</div>`);
+
+    // Draw route line (fallback)
+    L.polyline([pickupCoords, dropoffCoords], {
+      color: '#BFBD31',
+      weight: 3,
+      opacity: 0.8,
+      dashArray: '5, 5'
+    }).addTo(newMap);
+
+    // Set simple directions
+    setDirections([
+      {
+        step: 1,
+        text: `Head from ${pickupLocation || tripDestination} to ${dropoffLocation || tripDestination}`,
+        distance: Math.round(calculateDistance(pickupCoords, dropoffCoords) * 1000),
+        time: 0,
+        icon: '🛣️'
+      }
+    ]);
+  };
 
   return (
     <div className="flex flex-col h-full">
