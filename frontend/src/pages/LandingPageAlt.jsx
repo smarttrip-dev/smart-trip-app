@@ -56,7 +56,7 @@ export default function LandingPageAlt() {
       role: 'Travel Blogger',
       image: 'MC',
       rating: 5,
-      text: 'The AI planning saved me hours of research. Everything was perfectly organized within my budget.',
+      text: 'The Smart Planning Engine saved me hours of research. Everything was perfectly organized within my budget.',
       gradient: 'from-pink-500 to-rose-500'
     },
     {
@@ -90,12 +90,12 @@ export default function LandingPageAlt() {
 
   const faqs = [
     {
-      question: 'How does AI-powered planning work?',
-      answer: 'Our advanced AI analyzes thousands of trip combinations based on your budget, preferences, travel dates, and interests. It learns from millions of traveler data points to suggest the perfect itinerary tailored just for you.'
+      question: 'How does Smart planning work?',
+      answer: 'Our Smart Planning Engine analyzes thousands of trip combinations based on your budget, preferences, travel dates, and interests. It learns from millions of traveler data points to suggest the perfect itinerary tailored just for you.'
     },
     {
       question: 'What makes SmartTRIP different?',
-      answer: 'Unlike traditional booking sites, we focus on budget-first planning with complete transparency. Our AI creates entire trip packages, not just hotel bookings, and our soft-booking system ensures you only pay when everything is confirmed.'
+      answer: 'Unlike traditional booking sites, we focus on budget-first planning with complete transparency. Our Smart Planning Engine creates entire trip packages, not just hotel bookings, and our soft-booking system ensures you only pay when everything is confirmed.'
     },
     {
       question: 'Is my payment secure?',
@@ -107,7 +107,7 @@ export default function LandingPageAlt() {
     },
     {
       question: 'Do you offer group discounts?',
-      answer: 'Yes! Groups of 5+ travelers qualify for special rates. Our AI automatically applies group discounts when you specify the number of travelers during planning.'
+      answer: 'Yes! Groups of 5+ travelers qualify for special rates. Our Smart Planning Engine automatically applies group discounts when you specify the number of travelers during planning.'
     },
     {
       question: 'What if I need to cancel?',
@@ -123,7 +123,7 @@ export default function LandingPageAlt() {
       color: 'from-yellow-400 to-orange-500'
     },
     {
-      title: 'Instant AI Itineraries',
+      title: 'Smart Instant Itineraries',
       description: 'Get personalized trip plans in under 60 seconds',
       icon: '⚡',
       color: 'from-blue-400 to-indigo-500'
@@ -216,7 +216,7 @@ export default function LandingPageAlt() {
               </div>
               <div>
                 <h1 className="text-2xl font-heading font-bold gradient-text">SmartTRIP</h1>
-                <p className="text-xs text-slate-500 font-body">AI Travel Planning</p>
+                <p className="text-xs text-slate-500 font-body">Smart Travel Planning</p>
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export default function LandingPageAlt() {
               </h1>
 
               <p className="text-xl text-slate-400 leading-relaxed font-body">
-                AI creates your perfect Sri Lankan adventure in 60 seconds. 
+                Smart Planning Engine creates your perfect Sri Lankan adventure in 60 seconds. 
                 Budget-friendly, stress-free, and completely personalized.
               </p>
 
@@ -365,7 +365,7 @@ export default function LandingPageAlt() {
                   onClick={() => setShowSignupModal(true)}
                   className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:shadow-xl transition-all font-body text-lg"
                 >
-                  ✨ Generate AI Itinerary
+                  ✨ Generate Smart Itinerary
                 </button>
 
                 <div className="mt-6 pt-6 border-t border-white/5">

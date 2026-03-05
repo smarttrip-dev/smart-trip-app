@@ -28,7 +28,7 @@ export default function HelpSupport() {
       id: 1,
       category: 'Booking',
       question: 'How does SmartTRIP work?',
-      answer: 'SmartTRIP uses AI to create personalized itineraries based on your budget, preferences, and travel dates. Simply enter your requirements, review AI-generated options, customize as needed, and submit a soft booking request to our partner vendors. You\'ll receive confirmation within 24-48 hours.'
+      answer: 'SmartTRIP uses Smart Planning Engine to create personalized itineraries based on your budget, preferences, and travel dates. Simply enter your requirements, review Smart-generated options, customize as needed, and submit a soft booking request to our partner vendors. You\'ll receive confirmation within 24-48 hours.'
     },
     {
       id: 2,

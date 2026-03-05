@@ -360,6 +360,19 @@ export default function ItineraryCustomization() {
     });
   };
 
+  const removeTransport = (day) => {
+    const previousState = { ...itinerary };
+    setUndoStack([...undoStack, previousState]);
+
+    setItinerary({
+      ...itinerary,
+      [day]: {
+        ...itinerary[day],
+        transport: null
+      }
+    });
+  };
+
   const addAddon = (addon) => {
     const previousState = [...selectedAddOns];
     setUndoStack([...undoStack, { itinerary, selectedAddOns: previousState }]);
@@ -920,7 +933,20 @@ export default function ItineraryCustomization() {
 
             {/* Transport Options Panel */}
             <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-6 mb-6">
-              <h3 className="text-lg font-bold text-slate-200 mb-4">Transportation</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-200">Transportation</h3>
+                {itinerary[`day${selectedDay}`]?.transport && (
+                  <button
+                    onClick={() => removeTransport(`day${selectedDay}`)}
+                    className="text-sm px-3 py-1 bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Remove
+                  </button>
+                )}
+              </div>
               
               {/* Smart Pickup/Dropoff Location System */}
               <div className="mb-6 p-4 bg-slate-950 rounded-lg border border-white/10">
@@ -980,6 +1006,22 @@ export default function ItineraryCustomization() {
               </div>
               
               <div className="grid grid-cols-2 gap-3">
+                {/* No Transportation Option */}
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all flex flex-col items-center justify-center ${
+                    !itinerary[`day${selectedDay}`]?.transport
+                      ? 'border-[#BFBD31] bg-[#BFBD31]/10'
+                      : 'border-white/10 hover:border-[#BFBD31]/40'
+                  }`}
+                  onClick={() => removeTransport(`day${selectedDay}`)}
+                >
+                  <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  <p className="font-semibold text-slate-200 text-center text-sm">No Transportation</p>
+                  <p className="text-xs text-slate-400 mt-1">Skip transport</p>
+                </div>
+
                 {transportOptions.map(transport => (
                   <div 
                     key={transport.id}

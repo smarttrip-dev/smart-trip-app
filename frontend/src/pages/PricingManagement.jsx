@@ -355,7 +355,7 @@ export default function PricingManagement() {
             {smartPricingEnabled && (
               <div className="space-y-3">
                 <div className="p-4 bg-[#BFBD31]/10 border border-[#BFBD31]/20 rounded-lg">
-                  <p className="text-sm font-semibold text-blue-900 mb-1">AI Recommendation</p>
+                  <p className="text-sm font-semibold text-blue-900 mb-1">Smart Recommendation</p>
                   <p className="text-sm text-[#BFBD31]">Increase Deluxe Room price by 8% based on demand forecast</p>
                 </div>
                 <div className="p-4 bg-green-500/10 border border-green-200 rounded-lg">

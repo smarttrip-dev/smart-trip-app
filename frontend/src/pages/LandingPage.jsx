@@ -22,7 +22,7 @@ import footerBgImg from '../images/footer/footer-bg.jpg';
 import dondraFooterImg from '../images/footer/featured.jpg';
 
 const faqs = [
-  { id: 1, question: 'How does SmartTRIP work?', answer: 'SmartTRIP uses AI to create personalized itineraries based on your budget, preferences, and travel dates. Simply enter your requirements, review AI-generated options, customize as needed, and submit a soft booking request to our partner vendors.' },
+  { id: 1, question: 'How does SmartTRIP work?', answer: 'SmartTRIP uses Smart Planning Engine to create personalized itineraries based on your budget, preferences, and travel dates. Simply enter your requirements, review Smart-generated options, customize as needed, and submit a soft booking request to our partner vendors.' },
   { id: 2, question: 'What is soft-booking?', answer: 'Soft-booking means your trip request is sent to vendors for confirmation before payment. You receive confirmation within 24�48 hours and only pay once everything is confirmed. This ensures availability and prevents upfront payment for unconfirmed bookings.' },
   { id: 3, question: 'How accurate is the budget tracking?', answer: 'Our budget tracking is highly accurate and updates in real-time as you customize your itinerary. The system shows exact costs from our partner vendors, including all taxes and fees, so there are no surprises.' },
   { id: 4, question: 'Can I modify my itinerary after booking?', answer: 'Yes! Before vendor confirmation, you can modify your itinerary freely. After confirmation, modifications are subject to vendor policies and may incur additional charges. Contact our support team for assistance.' },
@@ -225,7 +225,7 @@ export default function LandingPage() {
 
             {/* Subheadline */}
             <p className="max-w-xl text-sm sm:text-base text-slate-300/80 leading-relaxed mb-8">
-              AI-powered travel planning that creates personalized itineraries matching your budget, preferences, and schedule. No hidden fees, complete transparency.
+              Smart travel planning that creates personalized itineraries matching your budget, preferences, and schedule. No hidden fees, complete transparency.
             </p>
 
             {/* CTA Buttons */}
@@ -344,7 +344,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-xs text-slate-400 mt-3 text-center">
-                <Link to="/register" className="text-[#BFBD31] hover:text-[#d4d235] underline underline-offset-2">Sign up</Link> to unlock full search and AI planning features
+                <Link to="/register" className="text-[#BFBD31] hover:text-[#d4d235] underline underline-offset-2">Sign up</Link> to unlock full search and Smart Planning Engine features
               </p>
             </div>
 
@@ -396,8 +396,8 @@ export default function LandingPage() {
             },
             { 
               step: '2', 
-              title: 'Get AI Recommendations', 
-              desc: 'Our AI creates personalized itineraries matching your needs and budget', 
+              title: 'Get Smart Recommendations', 
+              desc: 'Our Smart Planning Engine creates personalized itineraries matching your needs and budget', 
               icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
               color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20'
             },
@@ -479,7 +479,7 @@ export default function LandingPage() {
       <section id="destinations" className="relative z-10 w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-24 scroll-mt-20">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl sm:text-4xl font-gotham font-medium text-white">Popular Destinations</h2>
-          <p className="text-slate-400 text-sm sm:text-base">Explore Sri Lanka's most loved destinations with AI-powered itineraries</p>
+          <p className="text-slate-400 text-sm sm:text-base">Explore Sri Lanka's most loved destinations with Smart itineraries</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
@@ -590,7 +590,7 @@ export default function LandingPage() {
         
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
           {[
-            { title: 'AI-Powered Planning', text: 'Smart algorithms create optimal itineraries based on your preferences', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', glow: 'from-purple-500/20 to-transparent' },
+            { title: 'Smart Planning Engine', text: 'Smart algorithms create optimal itineraries based on your preferences', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', glow: 'from-purple-500/20 to-transparent' },
             { title: 'Budget Control', text: 'Real-time tracking ensures you never exceed your budget', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', glow: 'from-blue-500/20 to-transparent' },
             { title: 'Verified Vendors', text: 'All partners are vetted for quality and reliability', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', glow: 'from-indigo-500/20 to-transparent' },
             { title: 'Flexible Booking', text: 'Soft-booking process with no payment until confirmation', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', glow: 'from-violet-500/20 to-transparent' },
@@ -653,7 +653,7 @@ export default function LandingPage() {
             {
               initials: 'SJ', name: 'Sarah Johnson', country: 'Australia',
               rating: 5,
-              review: "SmartTRIP made planning our Sri Lanka honeymoon so easy! The AI recommendations were spot-on and we stayed perfectly within our budget. Highly recommended!",
+              review: "SmartTRIP made planning our Sri Lanka honeymoon so easy! The Smart recommendations were spot-on and we stayed perfectly within our budget. Highly recommended!",
               trip: 'Kandy & Galle Tour', date: 'January 2025',
             },
             {
