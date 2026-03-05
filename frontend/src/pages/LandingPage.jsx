@@ -287,18 +287,19 @@ export default function LandingPage() {
                 {/* Travelers */}
                 <div className="lg:col-span-1">
                   <p className="text-xs text-slate-300 mb-1.5">Travelers</p>
-                  <div className="rounded-lg bg-slate-800/80 border border-white/10 px-2.5 py-2.5 flex items-center justify-between text-sm min-h-10 gap-1.5">
-                    <div className="flex items-center gap-0.5 flex-1">
-                      <button onClick={() => setSearchForm({...searchForm, adults: Math.max(1, searchForm.adults - 1)})} className="bg-slate-700 px-1 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs">−</button>
-                      <span className="font-semibold text-slate-300 text-xs w-5 text-center flex-shrink-0">{searchForm.adults}</span>
-                      <button onClick={() => setSearchForm({...searchForm, adults: searchForm.adults + 1})} className="bg-slate-700 px-1 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs">+</button>
-                      <span className="text-slate-400 text-xs hidden sm:inline">A</span>
+                  <div className="rounded-lg bg-slate-800/80 border border-white/10 px-3 py-2.5 flex items-center justify-center gap-3 text-sm h-10">
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => setSearchForm({...searchForm, adults: Math.max(1, searchForm.adults - 1)})} className="bg-slate-700 px-1.5 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs leading-none">−</button>
+                      <span className="font-semibold text-slate-300 text-xs w-4 text-center leading-none">{searchForm.adults}</span>
+                      <button onClick={() => setSearchForm({...searchForm, adults: searchForm.adults + 1})} className="bg-slate-700 px-1.5 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs leading-none">+</button>
+                      <span className="text-slate-400 text-xs ml-1">A</span>
                     </div>
-                    <div className="flex items-center gap-0.5 flex-1">
-                      <button onClick={() => setSearchForm({...searchForm, children: Math.max(0, searchForm.children - 1)})} className="bg-slate-700 px-1 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs">−</button>
-                      <span className="font-semibold text-slate-300 text-xs w-5 text-center flex-shrink-0">{searchForm.children}</span>
-                      <button onClick={() => setSearchForm({...searchForm, children: searchForm.children + 1})} className="bg-slate-700 px-1 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs">+</button>
-                      <span className="text-slate-400 text-xs hidden sm:inline">C</span>
+                    <span className="text-slate-500">|</span>
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => setSearchForm({...searchForm, children: Math.max(0, searchForm.children - 1)})} className="bg-slate-700 px-1.5 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs leading-none">−</button>
+                      <span className="font-semibold text-slate-300 text-xs w-4 text-center leading-none">{searchForm.children}</span>
+                      <button onClick={() => setSearchForm({...searchForm, children: searchForm.children + 1})} className="bg-slate-700 px-1.5 py-0.5 rounded hover:bg-[#BFBD31]/30 text-slate-300 text-xs leading-none">+</button>
+                      <span className="text-slate-400 text-xs ml-1">C</span>
                     </div>
                   </div>
                 </div>
