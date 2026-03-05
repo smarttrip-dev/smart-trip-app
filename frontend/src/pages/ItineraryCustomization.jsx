@@ -153,6 +153,8 @@ export default function ItineraryCustomization() {
   
   // Smart Pickup/Dropoff Location System
   const [transportLocations, setTransportLocations] = useState({});
+  const [showDirections, setShowDirections] = useState(false);
+  const [routeDistance, setRouteDistance] = useState(null);
 
   const categories = ['All', 'Cultural', 'Adventure', 'Nature', 'Food', 'Shopping'];
 
@@ -388,6 +390,60 @@ export default function ItineraryCustomization() {
         [field]: value
       }
     });
+  };
+
+  // Recalculate route between pickup and dropoff
+  const handleRecalculateRoute = () => {
+    const dayData = transportLocations[selectedDay];
+    const pickupLoc = dayData?.pickup || tripLocation;
+    const dropoffLoc = dayData?.dropoff || tripLocation;
+
+    // Trigger re-render of TripMap with updated locations
+    setTransportLocations({
+      ...transportLocations,
+      [selectedDay]: {
+        ...dayData,
+        recalculate: Date.now() // Force map update
+      }
+    });
+
+    alert(`✅ Route Recalculated!\n\n📍 From: ${pickupLoc}\n📍 To: ${dropoffLoc}`);
+  };
+
+  // Show directions between pickup and dropoff
+  const handleViewDirections = () => {
+    const dayData = transportLocations[selectedDay];
+    const pickupLoc = dayData?.pickup || tripLocation;
+    const dropoffLoc = dayData?.dropoff || tripLocation;
+    const pickupTime = dayData?.pickupTime || '09:00';
+    const dropoffTime = dayData?.dropoffTime || '17:00';
+
+    setShowDirections(true);
+
+    // Create directions string
+    const directionsText = `
+📍 TRIP ROUTE DIRECTIONS
+
+START: ${pickupLoc}
+TIME: ${pickupTime}
+---
+DESTINATION: ${dropoffLoc}
+ARRIVAL TIME: ${dropoffTime}
+
+🚗 TRANSPORTATION OPTIONS:
+• Private Car: ${itinerary[`day${selectedDay}`]?.transport?.type === 'Private Car' ? '✅ Selected' : 'Available'}
+• Public Bus: Available
+• Train: Available
+• Shared Van: Available
+
+📱 Tips:
+- Confirm pickup location with your driver
+- Bring your booking confirmation
+- Allow 15 mins buffer time
+- Check real-time traffic on Google Maps
+    `;
+
+    alert(directionsText);
   };
 
   const undoLastChange = () => {
@@ -1214,13 +1270,13 @@ export default function ItineraryCustomization() {
 
               {/* Interactive Map */}
               <TripMap 
+                key={`map-${selectedDay}-${transportLocations[selectedDay]?.pickup}-${transportLocations[selectedDay]?.dropoff}`}
                 pickupLocation={transportLocations[selectedDay]?.pickup || tripLocation}
                 dropoffLocation={transportLocations[selectedDay]?.dropoff || tripLocation}
                 tripDestination={tripLocation}
-                onRecalculateRoute={() => {
-                  // Recalculate route logic
-                  alert('Route recalculated! Distance optimized.');
-                }}
+                onRecalculateRoute={handleRecalculateRoute}
+                onSetDistance={setRouteDistance}
+                onViewDirections={handleViewDirections}
               />
             </div>
           </div>
