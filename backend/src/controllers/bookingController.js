@@ -218,7 +218,28 @@ export const updateBookingStatus = async (req, res) => {
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
     const prevStatus = booking.status;
-    if (status) booking.status = status;
+    
+    // ⭐ MAJOR FIX #6: Validate status transitions (state machine)
+    if (status && status !== prevStatus) {
+      const validTransitions = {
+        pending: ['confirmed', 'rejected', 'cancelled', 'expired'],
+        confirmed: ['rejected', 'cancelled', 'expired'],
+        rejected: [],
+        cancelled: [],
+        expired: ['cancelled'],
+      };
+
+      if (!validTransitions[prevStatus] || !validTransitions[prevStatus].includes(status)) {
+        return res.status(400).json({
+          message: `Invalid status transition from ${prevStatus} to ${status}`,
+          currentStatus: prevStatus,
+          allowedStatuses: validTransitions[prevStatus] || [],
+        });
+      }
+
+      booking.status = status;
+    }
+
     if (paymentStatus) booking.paymentStatus = paymentStatus;
     await booking.save();
 
@@ -246,6 +267,14 @@ export const updateBookingStatus = async (req, res) => {
           type: 'booking_rejected',
           title: '❌ Booking Not Confirmed',
           message: `Your booking for "${destination}" was not confirmed.`,
+          bookingId: booking._id,
+        });
+      } else if (status === 'expired') {
+        await createNotification({
+          userId: booking.user,
+          type: 'booking_expired',
+          title: '⏰ Booking Expired',
+          message: `Your booking for "${destination}" has expired and is no longer available.`,
           bookingId: booking._id,
         });
       }

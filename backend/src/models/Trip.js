@@ -80,6 +80,7 @@ const tripSchema = new mongoose.Schema(
 );
 
 // Auto-generate tripId before saving if not provided
+// ⭐ MAJOR FIX #11: Trip date validation
 tripSchema.pre('save', async function (next) {
   if (!this.tripId) {
     const prefix = this.location
@@ -94,6 +95,30 @@ tripSchema.pre('save', async function (next) {
       month: 'short', day: '2-digit', year: 'numeric'
     });
   }
+
+  // ⭐ MAJOR FIX #11: Validate trip dates
+  if (this.dates?.from && this.dates?.to) {
+    const fromDate = new Date(this.dates.from);
+    const toDate = new Date(this.dates.to);
+
+    // Check if dates are valid
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return next(new Error('Trip dates must be valid date strings (YYYY-MM-DD or ISO format)'));
+    }
+
+    // Check if end date is after start date
+    if (toDate <= fromDate) {
+      return next(new Error('Trip end date must be after start date'));
+    }
+
+    // Check if start date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (fromDate < today) {
+      return next(new Error('Trip start date cannot be in the past'));
+    }
+  }
+
   next();
 });
 

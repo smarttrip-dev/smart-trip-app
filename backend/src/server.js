@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit"; // ⭐ CRITICAL FIX #5: Rate limiting
 
 import { connectDB } from "./config/db.js";
+import { scheduleBookingExpiryJob } from "./utils/bookingExpiryJob.js"; // ⭐ MAJOR FIX #10: Booking expiry
 import authRoutes from "./routes/authRoutes.js";
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
@@ -114,6 +115,9 @@ app.use((err, req, res, next) => {
 });
 
 connectDB().then(() => {
+    // ⭐ MAJOR FIX #10: Schedule booking expiry job
+    scheduleBookingExpiryJob();
+
     const server = app.listen(PORT, () => {
         console.log(`Server started on PORT: ${PORT}`);
     });
