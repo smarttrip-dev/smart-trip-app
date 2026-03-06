@@ -97,16 +97,38 @@ export default function VendorRegistration() {
     if (!validateStep(6)) return toast.error('Please complete all required fields and agree to the terms');
 
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-      if (!userInfo || !userInfo.token) {
-        toast.error('You must be logged in to register as a vendor.');
-        navigate('/login');
-        return;
+      // Step 1: Create user account first
+      const userPayload = {
+        name: formData.contactName || formData.username,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      let userToken;
+      try {
+        const userRes = await axios.post('/api/auth/register', userPayload);
+        userToken = userRes.data.token;
+        localStorage.setItem('userInfo', JSON.stringify(userRes.data));
+        toast.success('User account created successfully!');
+      } catch (authErr) {
+        // If user already exists, try to login instead
+        if (authErr.response?.status === 400 && authErr.response?.data?.message?.includes('already')) {
+          const loginRes = await axios.post('/api/auth/login', {
+            email: formData.email,
+            password: formData.password,
+          });
+          userToken = loginRes.data.token;
+          localStorage.setItem('userInfo', JSON.stringify(loginRes.data));
+          toast.success('Account login successful!');
+        } else {
+          throw authErr;
+        }
       }
 
-      const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userInfo.token}` } };
+      // Step 2: Register vendor profile
+      const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` } };
       
-      const { businessCertificate, taxDocuments, ownerIdProof, bankAccountProof, professionalLicenses, confirmPassword, ...vendorData } = formData;
+      const { businessCertificate, taxDocuments, ownerIdProof, bankAccountProof, professionalLicenses, confirmPassword, username, password, ...vendorData } = formData;
 
       const payload = {
         businessName: vendorData.businessName,

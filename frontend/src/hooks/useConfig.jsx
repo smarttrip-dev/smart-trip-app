@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext, createContext } from 'react';
 
 /**
  * Custom React hook for fetching configuration data from API
@@ -97,7 +97,6 @@ export const useAllConfig = () => {
 /**
  * Context to share config data across app without re-fetching
  */
-import { createContext, useState, useEffect } from 'react';
 
 export const ConfigContext = createContext();
 
@@ -115,7 +114,7 @@ export const ConfigProvider = ({ children }) => {
  * Hook to use config context
  */
 export const useAppConfig = () => {
-  const context = React.useContext(ConfigContext);
+  const context = useContext(ConfigContext);
   if (!context) {
     throw new Error('useAppConfig must be used within ConfigProvider');
   }

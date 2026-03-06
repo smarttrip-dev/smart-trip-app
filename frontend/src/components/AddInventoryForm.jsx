@@ -5,22 +5,27 @@ import toast from 'react-hot-toast';
 export default function AddInventoryForm({ onClose, onSubmit }) {
   const [formData, setFormData] = useState({
     name: '',
-    type: 'other',
+    type: 'accommodation',
     description: '',
     price: '',
     location: '',
     capacity: 1,
+    availableCount: 1,
     amenities: '',
+    isActive: true,
   });
   const [images, setImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const locations = ['Kandy', 'Galle', 'Ella', 'Sigiriya', 'Yala', 'Nuwara Eliya', 'Mirissa', 'Trincomalee', 'Anuradhapura', 'Colombo', 'Dambulla', 'Hikkaduwa'];
+  const types = ['accommodation', 'transport', 'activity', 'meal', 'package', 'other'];
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type: inputType, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: inputType === 'checkbox' ? checked : (name === 'capacity' || name === 'availableCount' ? parseInt(value) || 1 : value)
     }));
   };
 
@@ -33,6 +38,7 @@ export default function AddInventoryForm({ onClose, onSubmit }) {
 
     const newImages = [];
     const newPreviews = [];
+    let loaded = 0;
 
     files.forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
@@ -44,7 +50,8 @@ export default function AddInventoryForm({ onClose, onSubmit }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         newPreviews.push(reader.result);
-        if (newPreviews.length === files.length) {
+        loaded++;
+        if (loaded === files.length) {
           setImages(prev => [...prev, ...newImages]);
           setImagePreview(prev => [...prev, ...newPreviews]);
         }
@@ -66,8 +73,23 @@ export default function AddInventoryForm({ onClose, onSubmit }) {
       return;
     }
 
-    if (!formData.price) {
-      toast.error('Price is required');
+    if (!formData.price || parseFloat(formData.price) < 0) {
+      toast.error('Valid price is required');
+      return;
+    }
+
+    if (!formData.location) {
+      toast.error('Location is required');
+      return;
+    }
+
+    if (formData.capacity < 1) {
+      toast.error('Capacity must be at least 1');
+      return;
+    }
+
+    if (formData.availableCount > formData.capacity) {
+      toast.error('Available count cannot exceed capacity');
       return;
     }
 
@@ -78,6 +100,212 @@ export default function AddInventoryForm({ onClose, onSubmit }) {
       const submitData = new FormData();
       submitData.append('name', formData.name);
       submitData.append('type', formData.type);
+      submitData.append('description', formData.description);
+      submitData.append('price', parseFloat(formData.price));
+      submitData.append('location', formData.location);
+      submitData.append('capacity', formData.capacity);
+      submitData.append('availableCount', formData.availableCount);
+      submitData.append('amenities', formData.amenities ? formData.amenities.split(',').map(a => a.trim()).filter(Boolean).join(',') : '');
+      submitData.append('isActive', formData.isActive);
+
+      images.forEach(img => submitData.append('files', img));
+
+      const { data } = await axios.post('/api/inventory', submitData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Service added successfully!');
+      onSubmit(data);
+      onClose();
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Failed to add service';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-900 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+        <div className="sticky top-0 bg-slate-900 border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">Add New Service</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Service Name *</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="e.g., Deluxe Double Room"
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Type *</label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              >
+                {types.map(t => (
+                  <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Price (LKR) *</label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                placeholder="15000"
+                step="100"
+                min="0"
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Location *</label>
+              <select
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              >
+                <option value="">Select location...</option>
+                {locations.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Capacity *</label>
+              <input
+                type="number"
+                name="capacity"
+                value={formData.capacity}
+                onChange={handleChange}
+                min="1"
+                max="999"
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Currently Available *</label>
+              <input
+                type="number"
+                name="availableCount"
+                value={formData.availableCount}
+                onChange={handleChange}
+                min="0"
+                max={formData.capacity}
+                className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Describe your service..."
+              rows="3"
+              className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Amenities (comma-separated)</label>
+            <input
+              type="text"
+              name="amenities"
+              value={formData.amenities}
+              onChange={handleChange}
+              placeholder="WiFi, Air Conditioning, Breakfast, Pool"
+              className="w-full px-4 py-2 bg-slate-800 border border-white/20 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Images</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="w-full"
+            />
+            <p className="text-xs text-slate-400 mt-2">Max 10 images, 5MB each</p>
+
+            {imagePreview.length > 0 && (
+              <div className="grid grid-cols-4 gap-2 mt-4">
+                {imagePreview.map((preview, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={preview} alt={`Preview ${idx}`} className="w-full h-24 object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isActive"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={handleChange}
+              className="w-4 h-4"
+            />
+            <label htmlFor="isActive" className="text-sm text-slate-300">Active (visible to users)</label>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-white/10">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-white/20 text-slate-300 rounded-lg hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-[#BFBD31] text-slate-950 rounded-lg font-semibold hover:bg-[#a8a51f] disabled:opacity-50"
+            >
+              {loading ? 'Adding...' : 'Add Service'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
       submitData.append('description', formData.description);
       submitData.append('price', parseInt(formData.price));
       submitData.append('location', formData.location);

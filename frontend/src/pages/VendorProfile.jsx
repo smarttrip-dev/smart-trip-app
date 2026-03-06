@@ -1,79 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export default function VendorProfile() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('business');
   const [editMode, setEditMode] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [businessInfo, setBusinessInfo] = useState({
     logo: null,
-    businessName: "Earl's Regency Hotel",
-    businessType: 'Hotel/Guest House',
-    registrationNumber: 'BR-2015-KDY-1847',
-    taxId: 'TIN-847562314',
-    yearEstablished: '2015',
-    website: 'https://www.earlsregency.com',
-    facebook: 'https://facebook.com/earlsregency',
-    instagram: 'https://instagram.com/earlsregency',
-    shortDescription: 'Luxury boutique hotel in the heart of Kandy offering authentic Sri Lankan hospitality',
-    fullDescription: 'Welcome to Earl\'s Regency Hotel, where traditional Sri Lankan charm meets modern luxury...',
-    awards: 'TripAdvisor Certificate of Excellence 2023, 2024\nBest Boutique Hotel - Sri Lanka Tourism Awards 2023',
-    specializations: ['Cultural Tours', 'Wedding Venues', 'Corporate Events', 'Spa & Wellness'],
-    languages: ['English', 'Sinhala', 'Tamil', 'German'],
-    operatingHours: {
-      monday: { open: '06:00', close: '23:00' },
-      tuesday: { open: '06:00', close: '23:00' },
-      wednesday: { open: '06:00', close: '23:00' },
-      thursday: { open: '06:00', close: '23:00' },
-      friday: { open: '06:00', close: '23:00' },
-      saturday: { open: '06:00', close: '23:00' },
-      sunday: { open: '06:00', close: '23:00' }
-    }
+    businessName: '',
+    businessType: '',
+    registrationNumber: '',
+    taxId: '',
+    yearEstablished: '',
+    website: '',
+    facebook: '',
+    instagram: '',
   });
 
   const [contactInfo, setContactInfo] = useState({
-    fullName: 'Rajesh Kumar',
-    designation: 'General Manager',
-    email: 'rajesh@earlsregency.com',
-    phone: '+94 77 123 4567',
-    whatsapp: '+94 77 123 4567',
-    alternativeContact: '+94 81 234 5678',
-    addressLine1: '25 Temple Street',
-    addressLine2: 'Peradeniya Road',
-    city: 'Kandy',
-    province: 'Central',
-    postalCode: '20000',
+    fullName: '',
+    designation: '',
+    email: '',
+    phone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    province: '',
+    postalCode: '',
     country: 'Sri Lanka',
-    latitude: '7.2906',
-    longitude: '80.6337',
-    supportEmail: 'support@earlsregency.com',
-    supportPhone: '+94 81 234 5678',
-    supportHours: '24/7',
-    emergencyContact: '+94 77 999 8888'
   });
 
   const [bankingInfo, setBankingInfo] = useState({
-    bankName: 'Commercial Bank',
-    branchName: 'Kandy City',
-    branchCode: '001',
-    accountHolder: "Earl's Regency (Pvt) Ltd",
-    accountNumber: '****1234',
-    accountType: 'Current',
-    swiftCode: 'CCEYLKLX',
-    payoutFrequency: 'Monthly',
-    minPayout: '50000',
-    autoPayout: true,
-    taxId: 'TIN-847562314',
-    vatRegistered: true,
-    vatNumber: 'VAT-847-5623'
+    bankName: '',
+    branch: '',
+    accountName: '',
+    accountNumber: '',
+    accountType: '',
+    swiftCode: '',
   });
+
+  const getAuth = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    if (!userInfo.token) { navigate('/vendor-login'); return null; }
+    return { Authorization: `Bearer ${userInfo.token}` };
+  };
+
+  const fetchVendorProfile = async () => {
+    const headers = getAuth();
+    if (!headers) return;
+    try {
+      setLoading(true);
+      const { data } = await axios.get('/api/vendors/profile', { headers });
+      if (data) {
+        setBusinessInfo({
+          logo: null,
+          businessName: data.businessName || '',
+          businessType: data.businessType || '',
+          registrationNumber: data.registrationNumber || '',
+          taxId: data.taxId || '',
+          yearEstablished: data.yearEstablished || '',
+          website: data.website || '',
+          facebook: data.socialMedia?.facebook || '',
+          instagram: data.socialMedia?.instagram || '',
+        });
+        setContactInfo({
+          fullName: data.primaryContact?.name || '',
+          designation: data.primaryContact?.designation || '',
+          email: data.primaryContact?.email || '',
+          phone: data.primaryContact?.phone || '',
+          addressLine1: data.address?.addressLine1 || '',
+          addressLine2: data.address?.addressLine2 || '',
+          city: data.address?.city || '',
+          province: data.address?.province || '',
+          postalCode: data.address?.postalCode || '',
+          country: data.address?.country || 'Sri Lanka',
+        });
+        setBankingInfo({
+          bankName: data.bankDetails?.bankName || '',
+          branch: data.bankDetails?.branch || '',
+          accountName: data.bankDetails?.accountName || '',
+          accountNumber: data.bankDetails?.accountNumber || '',
+          accountType: data.bankDetails?.accountType || '',
+          swiftCode: data.bankDetails?.swiftCode || '',
+        });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendorProfile();
+  }, []);
 
   const verificationStatus = {
     email: true,
     phone: true,
     businessReg: true,
     taxDocs: true,
-    bankAccount: false, // still pending
+    bankAccount: false,
     license: false
   };
 
@@ -93,10 +126,55 @@ export default function VendorProfile() {
     { id: 'preview', label: 'Public Profile Preview' }
   ];
 
-  const handleSave = () => {
-    // TODO: actual save to API
-    alert('Changes saved successfully!');
-    setEditMode(false);
+  const handleSave = async () => {
+    const headers = getAuth();
+    if (!headers) return;
+    
+    try {
+      setSaving(true);
+      const payload = {
+        businessName: businessInfo.businessName,
+        businessType: businessInfo.businessType,
+        yearEstablished: parseInt(businessInfo.yearEstablished) || new Date().getFullYear(),
+        website: businessInfo.website,
+        businessEmail: businessInfo.email,
+        businessPhone: contactInfo.phone,
+        socialMedia: {
+          facebook: businessInfo.facebook,
+          instagram: businessInfo.instagram,
+        },
+        address: {
+          addressLine1: contactInfo.addressLine1,
+          addressLine2: contactInfo.addressLine2,
+          city: contactInfo.city,
+          province: contactInfo.province,
+          postalCode: contactInfo.postalCode,
+          country: contactInfo.country,
+        },
+        primaryContact: {
+          name: contactInfo.fullName,
+          designation: contactInfo.designation,
+          phone: contactInfo.phone,
+          email: contactInfo.email,
+        },
+        bankDetails: {
+          bankName: bankingInfo.bankName,
+          branch: bankingInfo.branch,
+          accountName: bankingInfo.accountName,
+          accountNumber: bankingInfo.accountNumber,
+          accountType: bankingInfo.accountType,
+          swiftCode: bankingInfo.swiftCode,
+        },
+      };
+      
+      await axios.put('/api/vendors/profile', payload, { headers });
+      toast.success('Profile updated successfully!');
+      setEditMode(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleBankingAccess = () => {

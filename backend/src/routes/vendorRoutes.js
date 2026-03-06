@@ -5,6 +5,8 @@ import {
   updateVendorProfile,
   getAllVendors,
   updateVendorStatus,
+  getVendorReviews,
+  getMyVendorReviews,
 } from '../controllers/vendorController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import { validateVendorInput } from '../middleware/validationMiddleware.js';
@@ -16,6 +18,10 @@ router.post('/register', protect, validateVendorInput, registerVendor);
 router.route('/profile')
   .get(protect, getVendorProfile)
   .put(protect, validateVendorInput, updateVendorProfile);
+
+// Vendor reviews
+router.get('/profile/reviews', protect, getMyVendorReviews);
+router.get('/:id/reviews', getVendorReviews);
 
 // Admin routes
 router.get('/', protect, getAllVendors);

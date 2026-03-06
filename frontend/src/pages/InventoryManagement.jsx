@@ -53,6 +53,7 @@ export default function InventoryManagement() {
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [vendorStatus, setVendorStatus] = useState(null);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -72,6 +73,26 @@ export default function InventoryManagement() {
     if (!userInfo?.token) { navigate('/vendor-login'); return null; }
     return userInfo.token;
   }, [navigate]);
+
+  // ── check vendor approval status ───────────────────────────────────────────
+  useEffect(() => {
+    const checkVendorStatus = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const { data } = await axios.get('/api/vendors/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setVendorStatus(data.status);
+        if (data.status !== 'approved') {
+          toast.error('Your vendor account is not approved yet. Please contact support.');
+        }
+      } catch (err) {
+        console.error('Failed to fetch vendor status');
+      }
+    };
+    checkVendorStatus();
+  }, [getToken]);
 
   // ── fetch inventory from DB ────────────────────────────────────────────────
   const fetchInventory = useCallback(async () => {

@@ -29,6 +29,7 @@ export default function ReservationManager() {
   const [showAcceptModal, setShowAcceptModal]   = useState(null);
   const [showRejectModal, setShowRejectModal]   = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(null);
+  const [vendorStatus, setVendorStatus]   = useState(null);
   const [filters, setFilters] = useState({ search: '', serviceType: 'all', dateFrom: '', sortBy: 'newest' });
   const [acceptForm, setAcceptForm] = useState({ notes: '' });
   const [rejectForm, setRejectForm] = useState({ reason: '', notes: '' });
@@ -38,6 +39,24 @@ export default function ReservationManager() {
     if (!info?.token) { navigate('/vendor-login'); return null; }
     return { Authorization: `Bearer ${info.token}` };
   };
+
+  // Check vendor approval on mount
+  useEffect(() => {
+    const checkVendorStatus = async () => {
+      const headers = getAuth();
+      if (!headers) return;
+      try {
+        const { data } = await axios.get('/api/vendors/profile', { headers });
+        setVendorStatus(data.status);
+        if (data.status !== 'approved') {
+          toast.error('Your vendor account must be approved to manage bookings');
+        }
+      } catch (err) {
+        console.error('Failed to fetch vendor status');
+      }
+    };
+    checkVendorStatus();
+  }, []);
 
   const fetchBookings = async () => {
     const headers = getAuth(); if (!headers) return;
