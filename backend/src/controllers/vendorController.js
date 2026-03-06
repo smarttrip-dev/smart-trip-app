@@ -84,6 +84,15 @@ export const updateVendorStatus = async (req, res) => {
     const valid = ['pending_review', 'approved', 'rejected', 'suspended'];
     if (!valid.includes(status)) {
       return res.status(400).json({ message: `Invalid status. Must be one of: ${valid.join(', ')}` });
+    }
+    const vendor = await Vendor.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
+    res.json(vendor);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Get vendor's reviews (for public profile)
 // @route   GET /api/vendors/:id/reviews
 // @access  Public

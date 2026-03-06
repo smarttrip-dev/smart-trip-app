@@ -16,6 +16,20 @@ export default function EditInventoryForm({ item, onClose, onSubmit }) {
   const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [destinations, setDestinations] = useState([]);
+
+  // Fetch destinations from API
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        const { data } = await axios.get('/api/config/destinations');
+        setDestinations(data.map(d => d.name));
+      } catch (error) {
+        console.error('Error fetching destinations:', error);
+      }
+    };
+    fetchDestinations();
+  }, []);
 
   // Populate form with existing item data
   useEffect(() => {
@@ -227,15 +241,18 @@ export default function EditInventoryForm({ item, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-300 mb-2">Location</label>
-            <input
-              type="text"
+            <label className="block text-sm font-bold text-slate-300 mb-2">Location *</label>
+            <select
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="e.g., Kandy, Galle, Nuwara Eliya"
-              className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+              className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">Select location...</option>
+              {destinations.map(dest => (
+                <option key={dest} value={dest}>{dest}</option>
+              ))}
+            </select>
           </div>
 
           <div>
