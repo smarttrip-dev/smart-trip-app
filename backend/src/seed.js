@@ -26,6 +26,8 @@ import ConfigPreference from './models/ConfigPreference.js';
 import ConfigBank from './models/ConfigBank.js';
 import ConfigWorkflow from './models/ConfigWorkflow.js';
 import ConfigItineraryItem from './models/ConfigItineraryItem.js';
+import Notification from './models/Notification.js';
+import { createNotification } from './controllers/notificationController.js';
 
 const FRESH = process.argv.includes('--fresh');
 
@@ -49,6 +51,7 @@ async function seed() {
       ConfigBank.deleteMany({}),
       ConfigWorkflow.deleteMany({}),
       ConfigItineraryItem.deleteMany({}),
+      Notification.deleteMany({}),
     ]);
     console.log('🗑  Cleared all collections');
   }
@@ -941,46 +944,46 @@ async function seed() {
 
   // ─── ITINERARY ITEMS ──────────────────────────────────────────────────────
   await ConfigItineraryItem.insertMany([
-    // HOTELS
+    // HOTELS (Kandy only)
     { type: 'hotel', name: "Earl's Regency Hotel", location: 'Kandy', price: 15000, rating: 4.5, amenities: ['WiFi', 'Pool', 'Breakfast'], category: 'Accommodation' },
     { type: 'hotel', name: 'Thilanka Hotel', location: 'Kandy', price: 12000, rating: 4.2, amenities: ['WiFi', 'Restaurant'], category: 'Accommodation' },
     { type: 'hotel', name: 'Cinnamon Citadel', location: 'Kandy', price: 18000, rating: 4.7, amenities: ['WiFi', 'Pool', 'Spa', 'Breakfast', 'Gym'], category: 'Accommodation' },
     { type: 'hotel', name: 'OZO Kandy', location: 'Kandy', price: 13000, rating: 4.3, amenities: ['WiFi', 'Breakfast', 'Restaurant'], category: 'Accommodation' },
     { type: 'hotel', name: 'Swiss Residence', location: 'Kandy', price: 10000, rating: 4.0, amenities: ['WiFi', 'Restaurant'], category: 'Accommodation' },
     
-    // TRANSPORT
+    // TRANSPORT (No location - generic)
     { type: 'transport', name: 'Private Car', price: 8000, duration: '3.5 hours', comfort: 'High', category: 'Transport' },
     { type: 'transport', name: 'Shared Van', price: 5000, duration: '4 hours', comfort: 'Medium', category: 'Transport' },
     { type: 'transport', name: 'Public Bus', price: 1500, duration: '5 hours', comfort: 'Basic', category: 'Transport' },
     { type: 'transport', name: 'Train', price: 2000, duration: '4.5 hours', comfort: 'Medium', category: 'Transport' },
     
-    // ACTIVITIES
-    { type: 'activity', name: 'Temple of the Tooth Visit', category: 'Cultural', price: 2000, duration: '2 hours', available: true },
-    { type: 'activity', name: 'Kandy Lake Walk', category: 'Nature', price: 0, duration: '1 hour', available: true },
-    { type: 'activity', name: 'Royal Botanical Gardens', category: 'Nature', price: 1500, duration: '3 hours', available: true },
-    { type: 'activity', name: 'Cultural Dance Show', category: 'Cultural', price: 3000, duration: '1.5 hours', available: true },
-    { type: 'activity', name: 'Tea Plantation Tour', category: 'Nature', price: 4000, duration: '4 hours', available: true },
-    { type: 'activity', name: 'Spice Garden Tour', category: 'Cultural', price: 2500, duration: '2 hours', available: true },
-    { type: 'activity', name: 'Gem Museum Visit', category: 'Cultural', price: 1000, duration: '1 hour', available: true },
-    { type: 'activity', name: 'Elephant Orphanage', category: 'Nature', price: 5000, duration: '3 hours', available: true },
-    { type: 'activity', name: 'Cooking Class', category: 'Food', price: 4500, duration: '3 hours', available: true },
-    { type: 'activity', name: 'Batik Workshop', category: 'Cultural', price: 3000, duration: '2 hours', available: false },
-    { type: 'activity', name: 'White Water Rafting', category: 'Adventure', price: 6000, duration: '4 hours', available: true },
+    // ACTIVITIES (Kandy - these need location field for proper filtering!)
+    { type: 'activity', name: 'Temple of the Tooth Visit', location: 'Kandy', category: 'Cultural', price: 2000, duration: '2 hours', available: true },
+    { type: 'activity', name: 'Kandy Lake Walk', location: 'Kandy', category: 'Nature', price: 0, duration: '1 hour', available: true },
+    { type: 'activity', name: 'Royal Botanical Gardens', location: 'Kandy', category: 'Nature', price: 1500, duration: '3 hours', available: true },
+    { type: 'activity', name: 'Cultural Dance Show', location: 'Kandy', category: 'Cultural', price: 3000, duration: '1.5 hours', available: true },
+    { type: 'activity', name: 'Tea Plantation Tour', location: 'Kandy', category: 'Nature', price: 4000, duration: '4 hours', available: true },
+    { type: 'activity', name: 'Spice Garden Tour', location: 'Kandy', category: 'Cultural', price: 2500, duration: '2 hours', available: true },
+    { type: 'activity', name: 'Gem Museum Visit', location: 'Kandy', category: 'Cultural', price: 1000, duration: '1 hour', available: true },
+    { type: 'activity', name: 'Elephant Orphanage', location: 'Kandy', category: 'Nature', price: 5000, duration: '3 hours', available: true },
+    { type: 'activity', name: 'Cooking Class', location: 'Kandy', category: 'Food', price: 4500, duration: '3 hours', available: true },
+    { type: 'activity', name: 'Batik Workshop', location: 'Kandy', category: 'Cultural', price: 3000, duration: '2 hours', available: false },
+    { type: 'activity', name: 'White Water Rafting', location: 'Kandy', category: 'Adventure', price: 6000, duration: '4 hours', available: true },
     
-    // MEALS
+    // MEALS (No location - generic)
     { type: 'meal', name: 'Breakfast Package (per day)', category: 'Food', price: 1500, frequency: 'per_day', icon: 'fork' },
     { type: 'meal', name: 'Lunch Package (per day)', category: 'Food', price: 2000, frequency: 'per_day', icon: 'fork' },
     { type: 'meal', name: 'Dinner Package (per day)', category: 'Food', price: 2500, frequency: 'per_day', icon: 'fork' },
     { type: 'meal', name: 'Vegetarian Meal Option', category: 'Food', price: 500, frequency: 'per_day', icon: 'leaf' },
     
-    // SERVICES
+    // SERVICES (No location - generic)
     { type: 'service', name: 'Professional Tour Guide (full day)', category: 'Guide', price: 5000, icon: 'user', frequency: 'per_day' },
     { type: 'service', name: 'Photography Package', price: 8000, icon: 'camera', frequency: 'one_time' },
     { type: 'service', name: 'Airport Pickup', category: 'Transport', price: 4000, icon: 'plane', frequency: 'one_time' },
     { type: 'service', name: 'Airport Drop-off', category: 'Transport', price: 4000, icon: 'plane', frequency: 'one_time' },
     { type: 'service', name: 'Travel Insurance', category: 'Insurance', price: 3000, icon: 'shield', frequency: 'one_time' },
     
-    // ROOM UPGRADES
+    // ROOM UPGRADES (No location - generic)
     { type: 'room_upgrade', name: 'Deluxe Room Upgrade', category: 'Room', price: 3000, icon: 'star', frequency: 'per_day' },
     { type: 'room_upgrade', name: 'Sea View Room', category: 'Room', price: 4000, icon: 'eye', frequency: 'per_day' },
     { type: 'room_upgrade', name: 'Extra Bed', category: 'Room', price: 2000, icon: 'bed', frequency: 'one_time' },
@@ -1243,6 +1246,31 @@ async function seed() {
     },
   ]);
   console.log(`💳 Created ${bookings.length} bookings (all confirmed, awaiting payment)`);
+
+  // ─── NOTIFICATIONS (for each booking) ──────────────────────────────────────
+  let notificationsCreated = 0;
+  for (const booking of bookings) {
+    // Create "booking_confirmed" notification
+    await createNotification({
+      userId: booking.user,
+      type: 'booking_confirmed',
+      title: '🎉 Booking Confirmed!',
+      message: `Your booking for "${booking.destination}" has been confirmed. You can now proceed to payment.`,
+      bookingId: booking._id,
+    });
+    
+    // Create "payment_due" notification
+    await createNotification({
+      userId: booking.user,
+      type: 'payment_due',
+      title: '💳 Payment Required',
+      message: `Please complete your payment of LKR ${booking.totalCost.toLocaleString()} for "${booking.destination}" to secure your booking.`,
+      bookingId: booking._id,
+    });
+    
+    notificationsCreated += 2;
+  }
+  console.log(`🔔 Created ${notificationsCreated} notifications (2 per booking)`);
 
   // ─── SUMMARY ──────────────────────────────────────────────────────────────
   console.log('\n✅ Seed complete! Login credentials:');

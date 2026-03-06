@@ -30,6 +30,9 @@ export default function AdminDashboard() {
   const [vendorFilter, setVendorFilter] = useState('all');
   const [bookingFilter, setBookingFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
@@ -54,6 +57,31 @@ export default function AdminDashboard() {
   const authHeader = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     return { Authorization: `Bearer ${userInfo.token}` };
+  };
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const headers = authHeader();
+      const [notifRes, unreadRes] = await Promise.all([
+        axios.get('/api/notifications', { headers }),
+        axios.get('/api/notifications/unread-count', { headers }),
+      ]);
+      setNotifications(notifRes.data || []);
+      setUnreadCount(unreadRes.data?.count || 0);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, []);
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const headers = authHeader();
+      await axios.patch(`/api/notifications/${notificationId}/read`, {}, { headers });
+      setNotifications(prev => prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n));
+      setUnreadCount(Math.max(0, unreadCount - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
   };
 
   const fetchDashboard = useCallback(async () => {
@@ -92,7 +120,13 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
+  useEffect(() => { 
+    fetchDashboard();
+    fetchNotifications();
+    // Refresh notifications every 30 seconds
+    const notifInterval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(notifInterval);
+  }, [fetchDashboard, fetchNotifications]);
 
   const updateVendorStatus = async (vendorId, status) => {
     setActionLoading(vendorId + status);
@@ -164,12 +198,79 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="relative p-2 hover:bg-slate-800/50 rounded-lg">
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
-                {stats.pendingTickets > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notification Dropdown Panel */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-96 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                    <div className="sticky top-0 bg-slate-900 border-b border-white/10 p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-white">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <span className="text-xs font-semibold text-[#BFBD31]">{unreadCount} unread</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <p className="text-slate-400 text-sm">No notifications yet</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-white/5">
+                        {notifications.slice(0, 5).map((notif) => (
+                          <div 
+                            key={notif._id}
+                            onClick={() => !notif.isRead && markNotificationAsRead(notif._id)}
+                            className={`p-4 cursor-pointer transition-colors ${
+                              notif.isRead 
+                                ? 'bg-transparent hover:bg-slate-800/30' 
+                                : 'bg-slate-800/40 hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.isRead ? 'bg-slate-600' : 'bg-[#BFBD31]'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-100 line-clamp-1">{notif.title}</p>
+                                <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">{notif.message}</p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  {new Date(notif.createdAt).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {notifications.length > 5 && (
+                          <div className="p-3 text-center border-t border-white/5">
+                            <a href="/notifications" className="text-xs font-semibold text-[#BFBD31] hover:text-[#d4cb2a]">
+                              View all notifications →
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
               <div className="w-8 h-8 bg-[#BFBD31] rounded-full flex items-center justify-center">
                 <span className="text-slate-950 text-sm font-bold">AD</span>
               </div>
