@@ -36,46 +36,77 @@ export default function ItineraryCustomization() {
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
 
-  // Fetch itinerary items from API with location filter
-  const { grouped: itineraryItems, loading: itItemsLoading } = useAllItineraryItems(tripLocation);
-  const { hotels = [], transport = [], activities = [], meals = [], services = [], room_upgrades = [] } = itineraryItems;
-
-  // Fetch real inventory items with images
+  // Fetch ALL inventory items from database (accommodation, transport, activity, etc.)
+  const [hotels, setHotels] = useState([]);
+  const [transport, setTransport] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [services, setServices] = useState([]);
+  const [meals, setMeals] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
+  const [itItemsLoading, setItItemsLoading] = useState(true);
   
   useEffect(() => {
-    const fetchInventoryActivities = async () => {
+    const fetchAllInventoryItems = async () => {
       try {
         setLoadingInventory(true);
-        // Build query params for location, type, and budget
-        const params = new URLSearchParams();
-        if (tripLocation) params.append('location', tripLocation);
-        params.append('type', 'activity'); // Explicitly request only activities
-        if (tripBudgetInit) params.append('maxPrice', Math.floor(tripBudgetInit / 5)); // Max 20% of budget per activity
+        setItItemsLoading(true);
         
-        const response = await fetch(`/api/inventory/public?${params.toString()}`);
-        if (!response.ok) throw new Error('Failed to fetch inventory');
+        // Fetch all types of inventory items
+        const types = ['accommodation', 'transport', 'activity', 'meal', 'other']; // 'other' includes services
+        const allItems = [];
         
-        const data = await response.json();
-        const items = Array.isArray(data) ? data : data.items || [];
-        
-        // Log the fetch results for debugging
-        console.log(`Fetched ${items.length} activities for location "${tripLocation}"`);
-        if (items.length > 0) {
-          console.log('Sample activity:', items[0]);
+        for (const type of types) {
+          const params = new URLSearchParams();
+          if (tripLocation) params.append('location', tripLocation);
+          params.append('type', type);
+          // Don't filter by price initially, we'll do it in the UI
+          
+          const response = await fetch(`/api/inventory/public?${params.toString()}`);
+          if (response.ok) {
+            const data = await response.json();
+            const items = Array.isArray(data) ? data : data.items || [];
+            allItems.push(...items.map(item => ({ ...item, inventoryType: type })));
+          }
         }
         
-        setInventoryItems(items);
+        // Separate items by type
+        const accommodationItems = allItems.filter(item => item.type === 'accommodation');
+        const transportItems = allItems.filter(item => item.type === 'transport');
+        const activityItems = allItems.filter(item => item.type === 'activity');
+        const mealItems = allItems.filter(item => item.type === 'meal');
+        const serviceItems = allItems.filter(item => item.type === 'other' || item.type === 'package');
+        
+        console.log(`📦 Fetched inventory for ${tripLocation}:`, {
+          hotels: accommodationItems.length,
+          transport: transportItems.length,
+          activities: activityItems.length,
+          meals: mealItems.length,
+          services: serviceItems.length
+        });
+        
+        setHotels(accommodationItems);
+        setTransport(transportItems);
+        setActivities(activityItems);
+        setMeals(mealItems);
+        setServices(serviceItems);
+        setInventoryItems(allItems);
       } catch (err) {
         console.error('Error fetching inventory items:', err);
+        // Set empty arrays as fallback
+        setHotels([]);
+        setTransport([]);
+        setActivities([]);
+        setMeals([]);
+        setServices([]);
         setInventoryItems([]);
       } finally {
         setLoadingInventory(false);
+        setItItemsLoading(false);
       }
     };
 
-    fetchInventoryActivities();
+    fetchAllInventoryItems();
   }, [tripLocation, tripBudgetInit]);
 
   // Build a lightweight fallback itinerary using the selected destination & budget
@@ -119,6 +150,12 @@ export default function ItineraryCustomization() {
     .map((h, idx) => ({
       ...h,
       id: h?._id || `h${idx}`,
+      name: h?.name,
+      location: h?.location,
+      price: h?.price,
+      rating: h?.rating || 4.0,
+      amenities: h?.amenities || [],
+      image: h?.images && h.images.length > 0 ? h.images[0] : '#667eea',
       priceDiff: (h?.price || 0) - currentHotelPrice
     }));
 
@@ -126,8 +163,9 @@ export default function ItineraryCustomization() {
     id: t?._id || `t${idx}`,
     type: t?.name,
     price: t?.price,
-    duration: t?.duration,
-    comfort: t?.comfort
+    duration: t?.duration || 'As needed',
+    comfort: t?.description || 'Standard',
+    image: t?.images && t.images.length > 0 ? t.images[0] : null
   })) : [
     { id: 't1', type: 'Private Car', price: 8000, duration: '3.5 hours', comfort: 'High' },
     { id: 't2', type: 'Shared Van', price: 5000, duration: '4 hours', comfort: 'Medium' },
@@ -136,24 +174,13 @@ export default function ItineraryCustomization() {
   ];
 
   // Show only activities available at the selected destination (backend already filters by location)
-  const availableActivities = activities
-    .filter(a => a?.available !== false)
-    .map((a, idx) => ({
-      id: a?._id || `a${idx}`,
-      name: a?.name,
-      price: a?.price,
-      duration: a?.duration,
-      category: a?.category,
-      available: a?.available !== false,
-      image: a?.image || '#667eea'
-    }));
-
   const addOns = {
     meals: meals.length > 0 ? meals.map((m, idx) => ({
       id: m?._id || `meal${idx}`,
       name: m?.name,
       price: m?.price,
-      type: m?.category
+      type: m?.description || 'Meal',
+      image: m?.images && m.images.length > 0 ? m.images[0] : null
     })) : [
       { id: 'meal1', name: 'Breakfast Package (per day)', price: 1500, type: 'Breakfast' },
       { id: 'meal2', name: 'Lunch Package (per day)', price: 2000, type: 'Lunch' },
@@ -164,7 +191,9 @@ export default function ItineraryCustomization() {
       id: s?._id || `srv${idx}`,
       name: s?.name,
       price: s?.price,
-      icon: s?.icon || 'box'
+      icon: 'box',
+      image: s?.images && s.images.length > 0 ? s.images[0] : null,
+      description: s?.description
     })) : [
       { id: 'srv1', name: 'Professional Tour Guide (full day)', price: 5000, icon: 'user' },
       { id: 'srv2', name: 'Photography Package', price: 8000, icon: 'camera' },
@@ -172,11 +201,17 @@ export default function ItineraryCustomization() {
       { id: 'srv4', name: 'Airport Drop-off', price: 4000, icon: 'plane' },
       { id: 'srv5', name: 'Travel Insurance', price: 3000, icon: 'shield' }
     ],
-    roomUpgrades: room_upgrades.length > 0 ? room_upgrades.map((r, idx) => ({
+    roomUpgrades: services.length > 0 ? services.filter(s => 
+      (s?.name || '').toLowerCase().includes('room') || 
+      (s?.name || '').toLowerCase().includes('upgrade') ||
+      (s?.name || '').toLowerCase().includes('check') ||
+      (s?.name || '').toLowerCase().includes('bed')
+    ).map((r, idx) => ({
       id: r?._id || `room${idx}`,
       name: r?.name,
       price: r?.price,
-      icon: r?.icon || 'star'
+      icon: 'star',
+      image: r?.images && r.images.length > 0 ? r.images[0] : null
     })) : [
       { id: 'room1', name: 'Deluxe Room Upgrade', price: 3000, icon: 'star' },
       { id: 'room2', name: 'Sea View Room', price: 4000, icon: 'eye' },
@@ -210,7 +245,7 @@ export default function ItineraryCustomization() {
     // ── Filter by destination ──
     const locHotels = hotels.filter(h => !h.location || h.location.toLowerCase() === loc);
     const locActivities = activities.filter(a =>
-      a.available !== false && (!a.location || a.location.toLowerCase() === loc)
+      a.availableCount > 0 && (!a.location || a.location.toLowerCase() === loc)
     );
 
     // ── Select hotels that fit the budget (≤45% of daily budget), best-rated first ──
@@ -245,7 +280,7 @@ export default function ItineraryCustomization() {
       price: h.price,
       rating: h.rating || 4.0,
       amenities: h.amenities || ['WiFi'],
-      image: h.image || '#667eea'
+      image: h.images && h.images.length > 0 ? h.images[0] : (h.image || '#667eea')
     } : null;
 
     const mapT = (t) => t ? {
@@ -253,7 +288,8 @@ export default function ItineraryCustomization() {
       type: t.name,
       price: t.price,
       duration: t.duration || 'As needed',
-      comfort: t.comfort || 'Medium'
+      comfort: t.description || t.comfort || 'Standard',
+      image: t.images && t.images.length > 0 ? t.images[0] : null
     } : null;
 
     const mapA = (a, idx) => ({
@@ -261,7 +297,8 @@ export default function ItineraryCustomization() {
       name: a.name,
       price: a.price || 0,
       duration: a.duration || '2 hours',
-      category: a.category || 'Nature'
+      category: a.description || a.category || 'Activity',
+      image: a.images && a.images.length > 0 ? a.images[0] : null
     });
 
     const startDate = tripState?.dates?.from ? new Date(tripState.dates.from) : new Date();
@@ -500,6 +537,28 @@ export default function ItineraryCustomization() {
     const taxes = Math.round(currentTotal * 0.1);
     const serviceFee = Math.round(currentTotal * 0.03);
 
+    // ⭐ Collect all inventory items with their IDs (only real MongoDB ObjectIds)
+    const isRealId = (id) => id && /^[0-9a-fA-F]{24}$/.test(String(id));
+    const inventoryItems = [];
+    days.forEach(day => {
+      if (day.hotel && isRealId(day.hotel.id)) {
+        inventoryItems.push({ inventoryId: day.hotel.id, price: day.hotel.price });
+      }
+      if (day.transport && isRealId(day.transport.id)) {
+        inventoryItems.push({ inventoryId: day.transport.id, price: day.transport.price });
+      }
+      (day.activities || []).forEach(activity => {
+        if (isRealId(activity.id)) {
+          inventoryItems.push({ inventoryId: activity.id, price: activity.price });
+        }
+      });
+      (day.meals || []).forEach(meal => {
+        if (isRealId(meal.id)) {
+          inventoryItems.push({ inventoryId: meal.id, price: meal.price });
+        }
+      });
+    });
+
     navigate('/booking-review', {
       state: {
         existingTripId: tripState?.existingTripId || null,
@@ -512,6 +571,7 @@ export default function ItineraryCustomization() {
         duration: `${days.length} Days / ${Math.max(days.length - 1, 1)} Nights`,
         totalCost: currentTotal,
         travelers: tripTravelers,
+        inventoryItems, // ⭐ Add inventory items with IDs
         itinerary: days.map((day, i) => ({
           day: i + 1,
           date: day.date,
@@ -544,93 +604,21 @@ export default function ItineraryCustomization() {
   };
 
   const filteredActivities = (() => {
-    const loc = tripLocation.toLowerCase();
-    const durationDays = parseInt(tripDuration) || 3;
-    const budgetPerDay = tripBudgetInit / durationDays;
-    const actBudgetLimit = budgetPerDay * 0.2; // Max 20% of daily budget for activities
-    
-    // ── Debug: Log current state ──
-    console.log('=== filteredActivities Debug ===');
-    console.log('tripLocation:', tripLocation);
-    console.log('inventoryItems count:', inventoryItems.length);
-    console.log('availableActivities count:', availableActivities.length);
-    
-    // ── Build activity source: prefer inventory items, fallback to config items ──
-    let activitySource = [];
-    
-    if (inventoryItems.length > 0) {
-      // Filter inventory items to only activities matching the selected location
-      activitySource = inventoryItems
-        .filter(item => {
-          // Only include activity-type items
-          const isActivity = item.type === 'activity' || item.category === 'activity';
-          if (!isActivity) return false;
-          
-          // Only include items from the selected location
-          const matchesLocation = !item.location || 
-            item.location.toLowerCase().includes(loc) || 
-            item.name.toLowerCase().includes(tripLocation.toLowerCase());
-          
-          // Only include available items
-          const isAvailable = item.isActive !== false && item.available !== false;
-          
-          // Only include items within budget
-          const withinBudget = (item.price || 0) <= actBudgetLimit;
-          
-          return matchesLocation && isAvailable && withinBudget;
-        })
-        .sort((a, b) => (a.price || 0) - (b.price || 0));
-      
-      console.log('Using inventory items. Filtered count:', activitySource.length);
-      if (activitySource.length > 0) {
-        console.log('Sample inventory item:', activitySource[0].name, 'Location:', activitySource[0].location);
-      }
-    }
-    
-    // ── Fallback to config items if no inventory activities found ──
-    if (activitySource.length === 0) {
-      console.log('Falling back to config items. Available count before filter:', availableActivities.length);
-      
-      // IMPORTANT: Also filter config items by location
-      const locFilteredConfig = availableActivities
-        .filter(a => {
-          // Try to match location - be flexible with matching
-          const hasLocation = a.location || a.name;
-          const matchesLoc = !a.location || 
-            a.location.toLowerCase().includes(loc) ||
-            tripLocation.toLowerCase().includes(a.location?.toLowerCase() || '');
-          
-          console.log(`Checking config item: "${a.name}" - Location: "${a.location}" - Matches "${tripLocation}"?`, matchesLoc);
-          
-          return matchesLoc;
-        });
-      
-      console.log('Config items matching location:', locFilteredConfig.length);
-      
-      activitySource = locFilteredConfig
-        .filter(a => (a.price || 0) <= actBudgetLimit)
-        .sort((a, b) => (a.price || 0) - (b.price || 0));
-      
-      console.log('Final fallback count after budget filter:', activitySource.length);
-    }
-    
-    // ── Apply category filter ──
-    const filtered = activeCategory === 'All' 
-      ? activitySource 
-      : activitySource.filter(a => a.category === activeCategory || a.type === activeCategory);
-    
-    console.log('After category filter:', filtered.length);
-    console.log('Final filtered activities:', filtered.map(a => ({ name: a.name, location: a.location, category: a.category })));
-    console.log('=== End Debug ===\n');
-    
-    // ── Map to required format ──
-    return filtered.map(item => ({
+    // `activities` state is already fetched from DB with type='activity' filtered by location
+    // Just apply category filter and map to required shape
+    const source = activities.filter(item => item.isActive !== false && (item.availableCount === undefined || item.availableCount > 0));
+
+    const categoryFiltered = activeCategory === 'All'
+      ? source
+      : source.filter(a => a.category === activeCategory);
+
+    return categoryFiltered.map(item => ({
       id: item._id || item.id,
       name: item.name,
       price: item.price,
       duration: item.duration || '2-3 hours',
-      category: item.category || item.type || 'Activity',
-      available: item.available !== false && item.isActive !== false,
+      category: item.category || 'Activity',
+      available: item.isActive !== false && (item.availableCount === undefined || item.availableCount > 0),
       images: item.images || [],
       description: item.description || '',
       location: item.location || ''
@@ -1263,6 +1251,24 @@ export default function ItineraryCustomization() {
               )}
 
               {/* Available Activities Grid */}
+              {loadingInventory ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="border border-white/10 rounded-lg overflow-hidden animate-pulse">
+                      <div className="h-24 bg-slate-700/50" />
+                      <div className="p-3 space-y-2">
+                        <div className="h-3 bg-slate-700/50 rounded w-3/4" />
+                        <div className="h-3 bg-slate-700/50 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredActivities.length === 0 ? (
+                <div className="text-center py-6 text-slate-400">
+                  <span className="text-2xl">🎭</span>
+                  <p className="text-sm mt-2">No activities available for {tripLocation} yet.</p>
+                </div>
+              ) : (
               <div className="grid grid-cols-2 gap-3">
                 {filteredActivities.slice(0, 4).map(activity => {
                   const imageUrl = activity.images && activity.images.length > 0 
@@ -1316,6 +1322,8 @@ export default function ItineraryCustomization() {
                   );
                 })}
               </div>
+              )}
+
             </div>
 
             {/* Add-Ons Section */}

@@ -209,33 +209,36 @@ export default function HelpSupport() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="relative min-h-screen bg-slate-950">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(66,153,132,0.15),_transparent_45%),radial-gradient(circle_at_20%_20%,_rgba(190,242,100,0.05),_transparent_35%)]" />
+      <div className="pointer-events-none absolute inset-0 mix-blend-screen opacity-30" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
       `}</style>
 
       {/* Top Navigation */}
-      <nav className="bg-slate-900 border border-white/10 shadow-sm sticky top-0 z-50">
+      <nav className="relative z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 shadow-sm sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-800/50 rounded-lg">
-                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/>
-                </svg>
+              <button onClick={() => navigate(-1)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <svg className="h-5 w-5 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-xl font-bold text-slate-200">Help & Support</span>
               </button>
-              <h1 className="text-xl font-bold text-slate-200">Help & Support</h1>
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2">
+              <button className="px-4 py-2 text-sm font-semibold text-slate-950 bg-[#BFBD31] rounded-full hover:bg-[#d4d235] transition-all flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                 </svg>
                 Live Chat
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-[#BFBD31] border border-[#BFBD31]/40 rounded-lg hover:bg-[#BFBD31]/10 flex items-center gap-2">
+              <button className="px-4 py-2 text-sm font-medium text-[#BFBD31] border border-[#BFBD31]/40 rounded-full hover:bg-[#BFBD31]/10 transition-all flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
@@ -248,20 +251,28 @@ export default function HelpSupport() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <div className="gradient-bg rounded-2xl p-8 mb-8 text-white">
-          <h2 className="text-3xl font-bold mb-2">How can we help you today?</h2>
-          <p className="text-white/90 mb-6">Search our knowledge base or contact support</p>
-          <div className="relative max-w-2xl">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for answers..."
-              className="w-full pl-12 pr-4 py-4 rounded-lg text-white focus:ring-2 focus:ring-white/50 outline-none text-lg"
-            />
+        <div className="relative overflow-hidden bg-slate-900/60 border border-white/10 rounded-2xl p-8 mb-8 backdrop-blur-md">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_rgba(191,189,49,0.08),_transparent_60%)] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#BFBD31]/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10">
+            <div className="mb-4 flex items-center gap-2 w-fit rounded-full border border-[#BFBD31]/30 bg-[#BFBD31]/10 px-4 py-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#BFBD31] animate-pulse"></span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-[#BFBD31]">Support Center</span>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-2">How can we help you today?</h2>
+            <p className="text-slate-400 mb-6">Search our knowledge base or contact our support team</p>
+            <div className="relative max-w-2xl">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for answers..."
+                className="w-full pl-12 pr-4 py-4 bg-slate-800/80 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none text-lg placeholder-slate-500"
+              />
+            </div>
           </div>
         </div>
 
@@ -269,7 +280,7 @@ export default function HelpSupport() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <button
             onClick={() => setShowSupportForm(true)}
-            className="p-6 bg-slate-900 border border-white/10 rounded-xl shadow-md hover:shadow-lg transition-all text-center"
+            className="p-6 bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm hover:border-[#BFBD31]/30 hover:bg-slate-800/60 transition-all text-center"
           >
             <div className="w-12 h-12 bg-[#BFBD31]/15 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,9 +291,9 @@ export default function HelpSupport() {
             <p className="text-sm text-slate-400 mt-1">Get help via email</p>
           </button>
 
-          <button className="p-6 bg-slate-900 border border-white/10 rounded-xl shadow-md hover:shadow-lg transition-all text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="p-6 bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm hover:border-[#BFBD31]/30 hover:bg-slate-800/60 transition-all text-center">
+            <div className="w-12 h-12 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
               </svg>
             </div>
@@ -290,8 +301,8 @@ export default function HelpSupport() {
             <p className="text-sm text-slate-400 mt-1">Chat with an agent</p>
           </button>
 
-          <button className="p-6 bg-slate-900 border border-white/10 rounded-xl shadow-md hover:shadow-lg transition-all text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <button className="p-6 bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm hover:border-[#BFBD31]/30 hover:bg-slate-800/60 transition-all text-center">
+            <div className="w-12 h-12 bg-[#BFBD31]/15 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
@@ -300,9 +311,9 @@ export default function HelpSupport() {
             <p className="text-sm text-slate-400 mt-1">+94 11 234 5678</p>
           </button>
 
-          <button className="p-6 bg-slate-900 border border-white/10 rounded-xl shadow-md hover:shadow-lg transition-all text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="p-6 bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm hover:border-[#BFBD31]/30 hover:bg-slate-800/60 transition-all text-center">
+            <div className="w-12 h-12 bg-orange-500/15 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
               </svg>
             </div>
@@ -312,7 +323,7 @@ export default function HelpSupport() {
         </div>
 
         {/* Section Tabs */}
-        <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-2 mb-6 flex gap-2 overflow-x-auto">
+        <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-2 mb-6 flex gap-2 overflow-x-auto">
           {sections.map(section => (
             <button
               key={section.id}
@@ -333,7 +344,7 @@ export default function HelpSupport() {
 
         {/* FAQs Section */}
         {activeSection === 'faq' && (
-          <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+          <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
             <h2 className="text-2xl font-bold text-white mb-6">Frequently Asked Questions</h2>
             <div className="space-y-3">
               {(searchQuery ? filteredFaqs : faqs).map(faq => (
@@ -343,7 +354,7 @@ export default function HelpSupport() {
                     className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-950 transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1">
-                      <span className="px-2 py-1 bg-[#BFBD31]/15 text-purple-700 text-xs font-semibold rounded">
+                      <span className="px-2 py-1 bg-[#BFBD31]/15 text-[#BFBD31] text-xs font-semibold rounded">
                         {faq.category}
                       </span>
                       <span className="font-semibold text-white">{faq.question}</span>
@@ -372,7 +383,7 @@ export default function HelpSupport() {
 
         {/* Knowledge Base Section */}
         {activeSection === 'search' && (
-          <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+          <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
             <h2 className="text-2xl font-bold text-white mb-6">Knowledge Base</h2>
             <div className="space-y-4">
               {filteredKnowledgeBase.map(article => (
@@ -404,7 +415,7 @@ export default function HelpSupport() {
 
         {/* Video Tutorials Section */}
         {activeSection === 'tutorials' && (
-          <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+          <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
             <h2 className="text-2xl font-bold text-white mb-6">Video Tutorials</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tutorials.map(tutorial => (
@@ -433,28 +444,28 @@ export default function HelpSupport() {
 
         {/* Contact Support Section */}
         {activeSection === 'contact' && !showSupportForm && (
-          <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+          <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
             <h2 className="text-2xl font-bold text-white mb-6">Contact Support</h2>
             <div className="space-y-6">
-              <div className="p-6 bg-[#BFBD31]/10 border border-[#BFBD31]/20 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">📧 Email Support</h3>
+              <div className="p-6 bg-slate-800/50 border border-[#BFBD31]/20 rounded-xl">
+                <h3 className="font-semibold text-white mb-2">📧 Email Support</h3>
                 <p className="text-[#BFBD31] mb-2">support@smarttrip.lk</p>
-                <p className="text-sm text-blue-300">Response time: Within 24 hours</p>
+                <p className="text-sm text-slate-400">Response time: Within 24 hours</p>
               </div>
 
-              <div className="p-6 bg-green-500/10 border border-green-200 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">💬 Live Chat</h3>
+              <div className="p-6 bg-slate-800/50 border border-green-500/20 rounded-xl">
+                <h3 className="font-semibold text-white mb-2">💬 Live Chat</h3>
                 <p className="text-green-400 mb-2">Chat with our support team in real-time</p>
-                <p className="text-sm text-green-300">Available: Mon-Fri, 9 AM - 6 PM (GMT+5:30)</p>
-                <button className="mt-3 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
+                <p className="text-sm text-slate-400">Available: Mon-Fri, 9 AM - 6 PM (GMT+5:30)</p>
+                <button className="mt-3 px-6 py-2 bg-[#BFBD31] text-slate-950 rounded-full font-semibold hover:bg-[#d4d235] transition-all">
                   Start Chat
                 </button>
               </div>
 
-              <div className="p-6 bg-[#BFBD31]/10 border border-[#BFBD31]/30 rounded-lg">
-                <h3 className="font-semibold text-purple-900 mb-2">📞 Phone Support</h3>
-                <p className="text-purple-800 mb-2">+94 11 234 5678</p>
-                <p className="text-sm text-purple-700">Available: Mon-Fri, 9 AM - 6 PM (GMT+5:30)</p>
+              <div className="p-6 bg-slate-800/50 border border-white/10 rounded-xl">
+                <h3 className="font-semibold text-white mb-2">📞 Phone Support</h3>
+                <p className="text-slate-300 mb-2">+94 11 234 5678</p>
+                <p className="text-sm text-slate-400">Available: Mon-Fri, 9 AM - 6 PM (GMT+5:30)</p>
               </div>
 
               <button
@@ -472,7 +483,7 @@ export default function HelpSupport() {
 
         {/* Support Form */}
         {showSupportForm && (
-          <div className="bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+          <div className="bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Submit Support Ticket</h2>
               <button
@@ -493,7 +504,7 @@ export default function HelpSupport() {
                 <select
                   value={supportForm.category}
                   onChange={(e) => setSupportForm({ ...supportForm, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#BFBD31] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-slate-800/80 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none"
                 >
                   <option value="">Select a category</option>
                   {issueCategories.map(category => (
@@ -511,7 +522,7 @@ export default function HelpSupport() {
                   value={supportForm.subject}
                   onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
                   placeholder="Brief summary of your issue"
-                  className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#BFBD31] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-slate-800/80 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none"
                 />
               </div>
 
@@ -524,7 +535,7 @@ export default function HelpSupport() {
                   onChange={(e) => setSupportForm({ ...supportForm, description: e.target.value })}
                   rows={6}
                   placeholder="Please provide detailed information about your issue..."
-                  className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#BFBD31] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-slate-800/80 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none"
                 />
               </div>
 
@@ -537,7 +548,7 @@ export default function HelpSupport() {
                   value={supportForm.bookingReference}
                   onChange={(e) => setSupportForm({ ...supportForm, bookingReference: e.target.value })}
                   placeholder="e.g., ST2025-KND-1847"
-                  className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#BFBD31] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-slate-800/80 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none"
                 />
               </div>
 
@@ -549,7 +560,7 @@ export default function HelpSupport() {
                   type="file"
                   accept="image/*"
                   onChange={handleFileUpload}
-                  className="w-full px-4 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-[#BFBD31] focus:border-transparent"
+                  className="w-full px-4 py-2 bg-slate-800/80 border border-white/10 rounded-lg text-slate-300 focus:ring-2 focus:ring-[#BFBD31]/50 focus:border-[#BFBD31]/50 outline-none"
                 />
                 {supportForm.screenshot && (
                   <p className="text-sm text-slate-400 mt-2">
@@ -576,7 +587,7 @@ export default function HelpSupport() {
                       bookingReference: ''
                     });
                   }}
-                  className="px-6 py-3 border border-white/20 text-slate-300 rounded-lg font-semibold hover:bg-slate-950"
+                  className="px-6 py-3 border border-white/20 text-slate-300 rounded-lg font-semibold hover:bg-slate-800/50 transition-all"
                 >
                   Cancel
                 </button>
@@ -586,7 +597,7 @@ export default function HelpSupport() {
         )}
 
         {/* Additional Resources */}
-        <div className="mt-8 bg-slate-900 border border-white/10 rounded-xl shadow-md p-8">
+        <div className="mt-8 bg-slate-900/60 border border-white/10 rounded-xl backdrop-blur-sm p-8">
           <h3 className="text-xl font-bold text-white mb-4">Additional Resources</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a href="#" className="p-4 border border-white/10 rounded-lg hover:border-[#BFBD31]/40 hover:bg-[#BFBD31]/10 transition-all flex items-center justify-between">

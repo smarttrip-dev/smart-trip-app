@@ -130,7 +130,18 @@ export default function BookingReview() {
           ...(day.meals && day.meals.length > 0 ? [{ time: 'Meals', items: day.meals.map(m => ({ type: 'meal', name: m })) }] : []),
         ],
       }));
+      
+      // ⭐ Build items array from inventory IDs (if provided)
+      const items = (passed.inventoryItems || []).map(item => ({
+        inventory: item.inventoryId,
+        priceAtBooking: item.price
+      }));
+      
+      console.log('📦 Booking payload items:', items.length, 'inventory items');
+      console.log('Items:', items);
+      
       const bookingPayload = {
+        items, // ⭐ Include inventory items so vendors can see these bookings
         destination: bookingDetails.destination,
         location: bookingDetails.location,
         duration: bookingDetails.dates.duration,

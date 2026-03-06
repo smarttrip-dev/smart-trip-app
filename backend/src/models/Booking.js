@@ -72,50 +72,69 @@ const bookingSchema = new mongoose.Schema(
 
 // ⭐ MAJOR FIX #6: Booking status transitions (state machine)
 // Prevent invalid status transitions
-bookingSchema.pre('save', function (next) {
-  if (!this.isModified('status')) return next();
-
-  const currentStatus = this.isNew ? 'pending' : this.constructor.schema.obj.status.default;
-  const newStatus = this.status;
-
-  // Valid state transitions
-  const validTransitions = {
-    pending: ['confirmed', 'rejected', 'cancelled', 'expired'],
-    confirmed: ['rejected', 'cancelled', 'expired'], // confirmed can't go back to pending
-    rejected: [], // rejected is final
-    cancelled: [], // cancelled is final
-    expired: ['cancelled'], // expired can be cancelled
-  };
-
-  // Get the old status if document exists in DB
-  if (!this.isNew) {
-    const oldStatus = this.constructor.findOne({ _id: this._id }).exec().then((doc) => {
-      if (doc && doc.status !== newStatus) {
-        if (!validTransitions[doc.status] || !validTransitions[doc.status].includes(newStatus)) {
-          throw new Error(`Invalid status transition from ${doc.status} to ${newStatus}`);
-        }
-      }
-    });
-    return oldStatus.then(() => next()).catch(next);
+bookingSchema.pre('save', async function (next) {
+  // Skip validation if status hasn't changed
+  if (!this.isModified('status')) {
+    return next();
   }
 
-  next();
+  // For new bookings, allow any status (default is 'pending')
+  if (this.isNew) {
+    return next();
+  }
+
+  // For existing bookings, validate state transitions
+  try {
+    const oldDoc = await this.constructor.findById(this._id);
+    if (!oldDoc) {
+      return next();
+    }
+
+    const oldStatus = oldDoc.status;
+    const newStatus = this.status;
+
+    // Valid state transitions
+    const validTransitions = {
+      pending: ['confirmed', 'rejected', 'cancelled', 'expired'],
+      confirmed: ['rejected', 'cancelled', 'expired'],
+      rejected: [],
+      cancelled: [],
+      expired: ['cancelled'],
+    };
+
+    // Check if transition is valid
+    if (oldStatus !== newStatus) {
+      if (!validTransitions[oldStatus] || !validTransitions[oldStatus].includes(newStatus)) {
+        const err = new Error(`Invalid status transition from ${oldStatus} to ${newStatus}`);
+        return next(err);
+      }
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ⭐ MAJOR FIX #10: Check if booking expired on query
-bookingSchema.pre(/^find/, function (next) {
-  // Auto-expire pending bookings that are past expiryDate
-  const now = new Date();
-  this.updateMany(
-    {
-      status: 'pending',
-      expiryDate: { $lt: now },
-    },
-    {
-      status: 'expired',
-    }
-  );
-  next();
+// FIXED: Properly handle async operation and use correct syntax
+bookingSchema.pre(/^find/, async function (next) {
+  try {
+    // Auto-expire pending bookings that are past expiryDate
+    const now = new Date();
+    await this.model.updateMany(
+      {
+        status: 'pending',
+        expiryDate: { $lt: now },
+      },
+      {
+        $set: { status: 'expired' },
+      }
+    );
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 const Booking = mongoose.model('Booking', bookingSchema);

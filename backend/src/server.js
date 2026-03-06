@@ -39,7 +39,7 @@ app.use(cors(corsOptions));
 // ⭐ RATE LIMITING (CRITICAL FIX #5) - Optimized for Railway
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // limit each IP to 1000 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -51,7 +51,7 @@ const generalLimiter = rateLimit({
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 login attempts per windowMs
+    max: 20, // limit each IP to 20 login attempts per windowMs
     message: 'Too many login attempts, please try again later.',
     skipSuccessfulRequests: true, // don't count successful requests
 });
@@ -75,7 +75,7 @@ app.use(generalLimiter);
 // API Routes
 app.use("/api/auth", loginLimiter, authRoutes); // ⭐ Rate limit login
 app.use('/api/config', configRoutes);
-app.use('/api/inventory', uploadLimiter, inventoryRoutes); // ⭐ Rate limit uploads
+app.use('/api/inventory', inventoryRoutes); // uploadLimiter applied per-route in inventoryRoutes (write ops only)
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/trips', tripRoutes);

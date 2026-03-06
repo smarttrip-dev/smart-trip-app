@@ -11,6 +11,7 @@ import {
   getAllBookings,
   getVendorBookings,
   vendorBookingAction,
+  assignVendor,
 } from '../controllers/bookingController.js';
 
 const router = express.Router();
@@ -32,5 +33,6 @@ router.put('/:id', protect, updateBooking);
 router.patch('/:id/pay', protect, payBooking);
 router.patch('/:id/cancel', protect, cancelBooking);
 router.patch('/:id/status', protect, adminOnly, updateBookingStatus);
+router.patch('/:id/assign-vendor', protect, adminOnly, assignVendor);
 
 export default router;

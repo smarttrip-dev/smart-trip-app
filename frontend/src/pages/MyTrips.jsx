@@ -20,58 +20,76 @@ export default function MyTrips() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchTrips = async () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    if (!userInfo?.token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      setLoading(true);
+      console.log('📥 Fetching bookings for user...');
+      const { data } = await axios.get('/api/bookings', {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      console.log(`✅ Received ${data.length} bookings:`, data);
+      
+      // Normalize Booking fields into the shape the template expects
+      const mappedTrips = data.map(b => ({
+        id: b._id,
+        destination: b.destination || 'My Trip',
+        location: b.location || '—',
+        status: b.status,
+        totalCost: b.totalCost || 0,
+        duration: b.duration || '—',
+        dates: {
+          from: b.tripDates?.startDate || '—',
+          to: b.tripDates?.endDate || '—',
+        },
+        travelers: {
+          adults: b.pax?.adults || 1,
+          children: b.pax?.children || 0,
+        },
+        image: null,
+        vendor: '—',
+        bookingDate: b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—',
+        reviewStatus: 'none',
+        paymentStatus: b.paymentStatus,
+        specialRequests: b.specialRequests || '',
+      }));
+      
+      console.log('📊 Mapped trips:', mappedTrips);
+      setTrips(mappedTrips);
+    } catch (err) {
+      console.error('❌ Error fetching trips:', err);
+      setError(err.response?.data?.message || 'Failed to load trips');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTrips = async () => {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-      if (!userInfo?.token) {
-        navigate('/login');
-        return;
-      }
-      try {
-        setLoading(true);
-        const { data } = await axios.get('/api/bookings', {
-          headers: { Authorization: `Bearer ${userInfo.token}` },
-        });
-        // Normalize Booking fields into the shape the template expects
-        setTrips(data.map(b => ({
-          id: b._id,
-          destination: b.destination || 'My Trip',
-          location: b.location || '—',
-          status: b.status,
-          totalCost: b.totalCost || 0,
-          duration: b.duration || '—',
-          dates: {
-            from: b.tripDates?.startDate || '—',
-            to: b.tripDates?.endDate || '—',
-          },
-          travelers: {
-            adults: b.pax?.adults || 1,
-            children: b.pax?.children || 0,
-          },
-          image: null,
-          vendor: '—',
-          bookingDate: b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—',
-          reviewStatus: 'none',
-          paymentStatus: b.paymentStatus,
-          specialRequests: b.specialRequests || '',
-        })));
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load trips');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTrips();
-  }, [navigate]);
+  }, [navigate, refreshTrigger]);
 
   const tabs = [
-    { id: 'upcoming', label: 'Upcoming Trips', count: trips.filter(t => t.status === 'confirmed').length },
+    { id: 'upcoming', label: 'Upcoming Trips', count: trips.filter(t => t.status === 'confirmed' || t.status === 'pending').length },
     { id: 'pending', label: 'Pending Approval', count: trips.filter(t => t.status === 'pending').length },
     { id: 'confirmed', label: 'Confirmed', count: trips.filter(t => t.status === 'confirmed').length },
     { id: 'completed', label: 'Completed', count: trips.filter(t => t.status === 'completed').length },
     { id: 'cancelled', label: 'Cancelled', count: trips.filter(t => t.status === 'cancelled').length }
   ];
+
+  console.log('📑 Tab counts:', {
+    upcoming: trips.filter(t => t.status === 'confirmed' || t.status === 'pending').length,
+    pending: trips.filter(t => t.status === 'pending').length,
+    confirmed: trips.filter(t => t.status === 'confirmed').length,
+    completed: trips.filter(t => t.status === 'completed').length,
+    cancelled: trips.filter(t => t.status === 'cancelled').length,
+    total: trips.length
+  });
 
   const statusConfig = {
     pending: { color: 'yellow', label: 'Pending Approval', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -258,9 +276,9 @@ export default function MyTrips() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button onClick={() => navigate('/')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <svg className="h-5 w-5 text-[#BFBD31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <span className="text-xl font-bold text-slate-200">My Trips</span>
@@ -350,18 +368,27 @@ export default function MyTrips() {
             </div>
 
             {/* Sort */}
-            <div>
+            <div className="flex gap-2">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-200 focus:border-[#BFBD31]/60 focus:ring-2 focus:ring-[#BFBD31]/40 outline-none transition"
+                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-200 focus:border-[#BFBD31]/60 focus:ring-2 focus:ring-[#BFBD31]/40 outline-none transition"
               >
                 <option value="newest" className="bg-slate-900">Newest First</option>
                 <option value="oldest" className="bg-slate-900">Oldest First</option>
                 <option value="price-high" className="bg-slate-900">Price: High to Low</option>
                 <option value="price-low" className="bg-slate-900">Price: Low to High</option>
-                <option value="date" className="bg-slate-900">Travel Date</option>
+                <option value="date" className="bg-slate-900">By Trip Date</option>
               </select>
+              <button
+                onClick={() => setRefreshTrigger(prev => prev + 1)}
+                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-[#BFBD31]/10 hover:border-[#BFBD31]/40 hover:text-[#BFBD31] transition-all"
+                title="Refresh trips"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -704,6 +731,7 @@ export default function MyTrips() {
           onClose={() => setShowPaymentModal(false)}
           onSuccess={() => {
             setTrips(prev => prev.map(t => t.id === selectedPaymentTrip.id ? { ...t, paymentStatus: 'paid' } : t));
+            setRefreshTrigger(prev => prev + 1); // Refresh trips list after payment
           }}
         />
       )}

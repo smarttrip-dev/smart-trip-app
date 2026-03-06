@@ -111,6 +111,7 @@ export default function AdminDashboard() {
         location: b.location,
         duration: b.duration,
         specialRequests: b.specialRequests,
+        vendorId: b.vendor?._id || b.vendor || null,
       }));
       setAllBookings(mapped);
     } catch (err) {
@@ -164,6 +165,16 @@ export default function AdminDashboard() {
   const filteredBookings = bookingFilter === 'all'
     ? allBookings
     : allBookings.filter(b => b.status === bookingFilter);
+
+  const handleAssignVendor = async (bookingId, vendorId) => {
+    try {
+      const headers = authHeader();
+      await axios.patch(`/api/bookings/${bookingId}/assign-vendor`, { vendorId: vendorId || null }, { headers });
+      setAllBookings(prev => prev.map(b => b.id === bookingId ? { ...b, vendorId: vendorId || null } : b));
+    } catch (err) {
+      alert('Failed to assign vendor: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   if (loading) {
     return (
@@ -579,6 +590,7 @@ export default function AdminDashboard() {
                         <th className="pb-3 font-medium text-right">Amount</th>
                         <th className="pb-3 font-medium">Status</th>
                         <th className="pb-3 font-medium">Payment</th>
+                        <th className="pb-3 font-medium">Assign Vendor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -593,6 +605,18 @@ export default function AdminDashboard() {
                           <td className="py-3 text-right font-semibold text-white whitespace-nowrap">LKR {b.amount.toLocaleString()}</td>
                           <td className="py-3"><Badge status={b.status}/></td>
                           <td className="py-3"><Badge status={b.paymentStatus}/></td>
+                          <td className="py-3">
+                            <select
+                              value={b.vendorId || ''}
+                              onChange={e => handleAssignVendor(b.id, e.target.value)}
+                              className="bg-slate-800 border border-white/10 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#BFBD31] min-w-[140px]"
+                            >
+                              <option value="">— Unassigned —</option>
+                              {allVendors.filter(v => v.status === 'approved').map(v => (
+                                <option key={v.id} value={v.id}>{v.businessName || v.ownerName}</option>
+                              ))}
+                            </select>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
