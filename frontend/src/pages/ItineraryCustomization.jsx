@@ -40,6 +40,35 @@ export default function ItineraryCustomization() {
   const { grouped: itineraryItems, loading: itItemsLoading } = useAllItineraryItems(tripLocation);
   const { hotels = [], transport = [], activities = [], meals = [], services = [], room_upgrades = [] } = itineraryItems;
 
+  // Fetch real inventory items with images
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [loadingInventory, setLoadingInventory] = useState(false);
+  
+  useEffect(() => {
+    const fetchInventoryActivities = async () => {
+      try {
+        setLoadingInventory(true);
+        // Build query params for location and budget
+        const params = new URLSearchParams();
+        if (tripLocation) params.append('location', tripLocation);
+        if (tripBudgetInit) params.append('maxPrice', Math.floor(tripBudgetInit / 5)); // Max 20% of budget per activity
+        
+        const response = await fetch(`/api/inventory/public?${params.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch inventory');
+        
+        const data = await response.json();
+        setInventoryItems(Array.isArray(data) ? data : data.items || []);
+      } catch (err) {
+        console.error('Error fetching inventory items:', err);
+        setInventoryItems([]);
+      } finally {
+        setLoadingInventory(false);
+      }
+    };
+
+    fetchInventoryActivities();
+  }, [tripLocation, tripBudgetInit]);
+
   // Build a lightweight fallback itinerary using the selected destination & budget
   const buildFallback = (loc, budgetTotal, durStr) => {
     const days = parseInt(durStr) || 3;
@@ -505,9 +534,41 @@ export default function ItineraryCustomization() {
     }
   };
 
-  const filteredActivities = activeCategory === 'All' 
-    ? availableActivities 
-    : availableActivities.filter(a => a.category === activeCategory);
+  const filteredActivities = (() => {
+    // Use inventory items if available, otherwise fall back to config items
+    const source = inventoryItems.length > 0 ? inventoryItems : availableActivities;
+    const filtered = activeCategory === 'All' 
+      ? source 
+      : source.filter(a => a.category === activeCategory || a.type === activeCategory);
+    
+    // Map inventory items to expected format
+    return filtered.map(item => ({
+      id: item._id || item.id,
+      name: item.name,
+      price: item.price,
+      duration: item.duration || '2-3 hours',
+      category: item.category || item.type || 'Activity',
+      available: item.available !== false && item.isActive !== false,
+      images: item.images || [],
+      description: item.description || ''
+    }));
+  })();
+
+  // Helper function to construct image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    // If it's an external URL, use as-is
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // If it's a relative path, prepend the API base URL
+    const apiBase = window.location.origin.includes('5173') 
+      ? 'http://localhost:5001'
+      : window.location.origin;
+    return `${apiBase}${imagePath}`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -1120,35 +1181,57 @@ export default function ItineraryCustomization() {
 
               {/* Available Activities Grid */}
               <div className="grid grid-cols-2 gap-3">
-                {filteredActivities.slice(0, 4).map(activity => (
-                  <div 
-                    key={activity.id}
-                    className={`border rounded-lg overflow-hidden ${
-                      activity.available ? 'hover:shadow-md transition-shadow' : 'opacity-60'
-                    }`}
-                  >
-                    <div className="h-24" style={{ background: activity.image }}></div>
-                    <div className="p-3">
-                      <h4 className="font-semibold text-slate-200 text-sm mb-1">{activity.name}</h4>
-                      <p className="text-xs text-slate-400 mb-2">{activity.duration} • {activity.category}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-[#BFBD31]">
-                          LKR {activity.price.toLocaleString()}
-                        </span>
-                        {activity.available ? (
-                          <button 
-                            onClick={() => addActivityToDay(activity, `day${selectedDay}`)}
-                            className="px-3 py-1 bg-[#BFBD31] text-slate-950 text-xs rounded-lg hover:bg-[#BFBD31]"
-                          >
-                            Add
-                          </button>
+                {filteredActivities.slice(0, 4).map(activity => {
+                  const imageUrl = activity.images && activity.images.length > 0 
+                    ? getImageUrl(activity.images[0])
+                    : null;
+                  
+                  return (
+                    <div 
+                      key={activity.id}
+                      className={`border rounded-lg overflow-hidden ${
+                        activity.available ? 'hover:shadow-md transition-shadow' : 'opacity-60'
+                      }`}
+                    >
+                      <div className="h-24 bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
+                        {imageUrl ? (
+                          <img 
+                            src={imageUrl} 
+                            alt={activity.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              console.error('Image load failed:', imageUrl);
+                              e.target.style.display = 'none';
+                            }}
+                          />
                         ) : (
-                          <span className="text-xs text-slate-500">Unavailable</span>
+                          <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                            <span className="text-2xl">📸</span>
+                          </div>
                         )}
                       </div>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-slate-200 text-sm mb-1">{activity.name}</h4>
+                        <p className="text-xs text-slate-400 mb-2">{activity.duration} • {activity.category}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-[#BFBD31]">
+                            LKR {activity.price.toLocaleString()}
+                          </span>
+                          {activity.available ? (
+                            <button 
+                              onClick={() => addActivityToDay(activity, `day${selectedDay}`)}
+                              className="px-3 py-1 bg-[#BFBD31] text-slate-950 text-xs rounded-lg hover:bg-[#BFBD31]"
+                            >
+                              Add
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-500">Unavailable</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1650,38 +1733,60 @@ export default function ItineraryCustomization() {
             </div>
 
             <div className="p-6 grid grid-cols-2 gap-4">
-              {filteredActivities.map(activity => (
-                <div 
-                  key={activity.id}
-                  className={`border rounded-lg overflow-hidden ${
-                    activity.available ? 'hover:shadow-lg transition-shadow' : 'opacity-60'
-                  }`}
-                >
-                  <div className="h-32" style={{ background: activity.image }}></div>
-                  <div className="p-4">
-                    <h4 className="font-semibold text-slate-200 mb-1">{activity.name}</h4>
-                    <p className="text-sm text-slate-400 mb-3">{activity.duration} • {activity.category}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-[#BFBD31]">
-                        LKR {activity.price.toLocaleString()}
-                      </span>
-                      {activity.available ? (
-                        <button 
-                          onClick={() => {
-                            addActivityToDay(activity, `day${selectedDay}`);
-                            setShowActivityModal(false);
+              {filteredActivities.map(activity => {
+                const imageUrl = activity.images && activity.images.length > 0 
+                  ? getImageUrl(activity.images[0])
+                  : null;
+                
+                return (
+                  <div 
+                    key={activity.id}
+                    className={`border rounded-lg overflow-hidden ${
+                      activity.available ? 'hover:shadow-lg transition-shadow' : 'opacity-60'
+                    }`}
+                  >
+                    <div className="h-32 bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
+                      {imageUrl ? (
+                        <img 
+                          src={imageUrl} 
+                          alt={activity.name}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                          onError={(e) => {
+                            console.error('Image load failed:', imageUrl);
+                            e.target.style.display = 'none';
                           }}
-                          className="px-4 py-2 bg-[#BFBD31] text-slate-950 text-sm rounded-lg hover:bg-[#BFBD31] font-medium"
-                        >
-                          Add to Trip
-                        </button>
+                        />
                       ) : (
-                        <span className="text-sm text-red-400 font-medium">Unavailable</span>
+                        <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                          <span className="text-4xl">📸</span>
+                        </div>
                       )}
                     </div>
+                    <div className="p-4">
+                      <h4 className="font-semibold text-slate-200 mb-1">{activity.name}</h4>
+                      <p className="text-sm text-slate-400 mb-3">{activity.duration} • {activity.category}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-[#BFBD31]">
+                          LKR {activity.price.toLocaleString()}
+                        </span>
+                        {activity.available ? (
+                          <button 
+                            onClick={() => {
+                              addActivityToDay(activity, `day${selectedDay}`);
+                              setShowActivityModal(false);
+                            }}
+                            className="px-4 py-2 bg-[#BFBD31] text-slate-950 text-sm rounded-lg hover:bg-[#BFBD31] font-medium"
+                          >
+                            Add to Trip
+                          </button>
+                        ) : (
+                          <span className="text-sm text-red-400 font-medium">Unavailable</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
