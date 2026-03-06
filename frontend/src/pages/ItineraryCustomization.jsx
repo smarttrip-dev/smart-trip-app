@@ -48,16 +48,25 @@ export default function ItineraryCustomization() {
     const fetchInventoryActivities = async () => {
       try {
         setLoadingInventory(true);
-        // Build query params for location and budget
+        // Build query params for location, type, and budget
         const params = new URLSearchParams();
         if (tripLocation) params.append('location', tripLocation);
+        params.append('type', 'activity'); // Explicitly request only activities
         if (tripBudgetInit) params.append('maxPrice', Math.floor(tripBudgetInit / 5)); // Max 20% of budget per activity
         
         const response = await fetch(`/api/inventory/public?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch inventory');
         
         const data = await response.json();
-        setInventoryItems(Array.isArray(data) ? data : data.items || []);
+        const items = Array.isArray(data) ? data : data.items || [];
+        
+        // Log the fetch results for debugging
+        console.log(`Fetched ${items.length} activities for location "${tripLocation}"`);
+        if (items.length > 0) {
+          console.log('Sample activity:', items[0]);
+        }
+        
+        setInventoryItems(items);
       } catch (err) {
         console.error('Error fetching inventory items:', err);
         setInventoryItems([]);
@@ -535,13 +544,51 @@ export default function ItineraryCustomization() {
   };
 
   const filteredActivities = (() => {
-    // Use inventory items if available, otherwise fall back to config items
-    const source = inventoryItems.length > 0 ? inventoryItems : availableActivities;
-    const filtered = activeCategory === 'All' 
-      ? source 
-      : source.filter(a => a.category === activeCategory || a.type === activeCategory);
+    const loc = tripLocation.toLowerCase();
+    const durationDays = parseInt(tripDuration) || 3;
+    const budgetPerDay = tripBudgetInit / durationDays;
+    const actBudgetLimit = budgetPerDay * 0.2; // Max 20% of daily budget for activities
     
-    // Map inventory items to expected format
+    // ── Build activity source: prefer inventory items, fallback to config items ──
+    let activitySource = [];
+    
+    if (inventoryItems.length > 0) {
+      // Filter inventory items to only activities matching the selected location
+      activitySource = inventoryItems
+        .filter(item => {
+          // Only include activity-type items
+          const isActivity = item.type === 'activity' || item.category === 'activity';
+          if (!isActivity) return false;
+          
+          // Only include items from the selected location
+          const matchesLocation = !item.location || 
+            item.location.toLowerCase().includes(loc) || 
+            item.name.toLowerCase().includes(tripLocation.toLowerCase());
+          
+          // Only include available items
+          const isAvailable = item.isActive !== false && item.available !== false;
+          
+          // Only include items within budget
+          const withinBudget = (item.price || 0) <= actBudgetLimit;
+          
+          return matchesLocation && isAvailable && withinBudget;
+        })
+        .sort((a, b) => (a.price || 0) - (b.price || 0));
+    }
+    
+    // ── Fallback to config items if no inventory activities found ──
+    if (activitySource.length === 0) {
+      activitySource = availableActivities
+        .filter(a => (a.price || 0) <= actBudgetLimit)
+        .sort((a, b) => (a.price || 0) - (b.price || 0));
+    }
+    
+    // ── Apply category filter ──
+    const filtered = activeCategory === 'All' 
+      ? activitySource 
+      : activitySource.filter(a => a.category === activeCategory || a.type === activeCategory);
+    
+    // ── Map to required format ──
     return filtered.map(item => ({
       id: item._id || item.id,
       name: item.name,
@@ -550,7 +597,8 @@ export default function ItineraryCustomization() {
       category: item.category || item.type || 'Activity',
       available: item.available !== false && item.isActive !== false,
       images: item.images || [],
-      description: item.description || ''
+      description: item.description || '',
+      location: item.location || ''
     }));
   })();
 
