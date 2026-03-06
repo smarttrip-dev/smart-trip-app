@@ -10,6 +10,34 @@ export const registerUser = async (req, res) => {
     const { name, email, password, role, phone, dateOfBirth, location, preferredLanguage, bio, travelInterests, vendor: vendorData } = req.body;
 
     try {
+        // ⭐ INPUT VALIDATION (CRITICAL FIX #4)
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: 'name, email, and password are required' });
+        }
+
+        // ⭐ EMAIL VALIDATION (MAJOR FIX #9)
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Invalid email format' });
+        }
+
+        // ⭐ PASSWORD STRENGTH VALIDATION (MAJOR FIX #8)
+        if (password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+        if (!/[A-Z]/.test(password)) {
+            return res.status(400).json({ message: 'Password must contain at least one uppercase letter' });
+        }
+        if (!/[a-z]/.test(password)) {
+            return res.status(400).json({ message: 'Password must contain at least one lowercase letter' });
+        }
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({ message: 'Password must contain at least one number' });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            return res.status(400).json({ message: 'Password must contain at least one special character (!@#$%^&*...)' });
+        }
+
         const userExists = await User.findOne({ email });
 
         if (userExists) {
@@ -24,7 +52,7 @@ export const registerUser = async (req, res) => {
 
         const user = await User.create({
             name,
-            email,
+            email: email.toLowerCase(),
             password: hashedPassword,
             role: userRole,
             phone: phone || '',
@@ -90,6 +118,11 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // ⭐ INPUT VALIDATION
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
+
         const user = await User.findOne({ email });
 
         if (user && (await bcrypt.compare(password, user.password))) {
@@ -112,7 +145,7 @@ export const loginUser = async (req, res) => {
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
     }
 };
 

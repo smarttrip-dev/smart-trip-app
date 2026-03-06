@@ -43,6 +43,49 @@ export const createBooking = async (req, res) => {
       destination, location, duration, itinerarySummary, totalCost: bodyTotal,
     } = req.body;
 
+    // ──────────────────────────────────────────────────────────────────────
+    // INPUT VALIDATION
+    // ──────────────────────────────────────────────────────────────────────
+    
+    // Validate pax
+    if (pax) {
+      const { adults = 1, children = 0, infants = 0 } = pax;
+      if (!Number.isInteger(adults) || adults < 1) {
+        return res.status(400).json({ message: 'adults must be an integer >= 1' });
+      }
+      if (!Number.isInteger(children) || children < 0) {
+        return res.status(400).json({ message: 'children must be a non-negative integer' });
+      }
+      if (!Number.isInteger(infants) || infants < 0) {
+        return res.status(400).json({ message: 'infants must be a non-negative integer' });
+      }
+    }
+
+    // Validate trip dates
+    if (tripDates?.startDate) {
+      const startDate = new Date(tripDates.startDate);
+      if (isNaN(startDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid startDate format' });
+      }
+    }
+    if (tripDates?.endDate) {
+      const endDate = new Date(tripDates.endDate);
+      if (isNaN(endDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid endDate format' });
+      }
+      if (tripDates.startDate) {
+        const start = new Date(tripDates.startDate);
+        if (endDate <= start) {
+          return res.status(400).json({ message: 'endDate must be after startDate' });
+        }
+      }
+    }
+
+    // Validate totalCost
+    if (typeof bodyTotal !== 'number' || bodyTotal < 0) {
+      return res.status(400).json({ message: 'totalCost must be a non-negative number' });
+    }
+
     // ── Itinerary-based booking (no items) ────────────────────────────────
     if (!Array.isArray(items) || items.length === 0) {
       if (!bodyTotal)
@@ -57,7 +100,7 @@ export const createBooking = async (req, res) => {
         itinerarySummary: itinerarySummary || [],
         totalCost: bodyTotal,
         tripDates: tripDates || {},
-        pax: pax || { adults: 1, children: 0 },
+        pax: pax || { adults: 1, children: 0, infants: 0 },
         specialRequests: specialRequests || '',
       });
       return res.status(201).json(booking);
@@ -70,6 +113,15 @@ export const createBooking = async (req, res) => {
     for (const item of items) {
       const inv = await InventoryItem.findById(item.inventory);
       if (!inv) return res.status(404).json({ message: `Inventory item ${item.inventory} not found` });
+      
+      // ⭐ CHECK AVAILABILITY (CRITICAL FIX #1)
+      if (inv.availableCount < 1) {
+        return res.status(409).json({ 
+          message: `${inv.name} is currently unavailable (0 in stock)`,
+          unavailableItem: inv._id
+        });
+      }
+      
       const price = item.priceAtBooking ?? inv.price;
       totalCost += price;
       resolvedItems.push({ inventory: inv._id, priceAtBooking: price });
@@ -80,13 +132,32 @@ export const createBooking = async (req, res) => {
       items: resolvedItems,
       totalCost,
       tripDates: tripDates || {},
-      pax: pax || { adults: 1, children: 0 },
+      pax: pax || { adults: 1, children: 0, infants: 0 },
       specialRequests: specialRequests || '',
     });
 
+    // ⭐ DECREMENT INVENTORY (CRITICAL FIX #2)
+    for (const item of booking.items) {
+      const updated = await InventoryItem.findByIdAndUpdate(
+        item.inventory,
+        { $inc: { availableCount: -1 } },
+        { new: true, runValidators: true }
+      );
+      
+      // Verify stock didn't go negative
+      if (updated.availableCount < 0) {
+        // Rollback: cancel booking and restore stock
+        await Booking.findByIdAndUpdate(booking._id, { status: 'cancelled' });
+        return res.status(409).json({ 
+          message: 'Booking failed: inventory exhausted during processing',
+          bookingId: booking._id
+        });
+      }
+    }
+
     res.status(201).json(booking);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Server error', error: process.env.NODE_ENV === 'development' ? err.message : undefined });
   }
 };
 

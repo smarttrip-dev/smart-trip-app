@@ -29,4 +29,18 @@ const vendorOnly = (req, res, next) => {
   return res.status(403).json({ message: 'Vendor access only' });
 };
 
-export { protect, adminOnly, vendorOnly };
+// ⭐ CRITICAL FIX #3: Vendor approval check
+// Prevents unapproved vendors from accessing protected endpoints
+const checkVendorApproval = (req, res, next) => {
+  if (req.user && req.user.role === 'vendor') {
+    if (!req.user.isApproved) {
+      return res.status(403).json({ 
+        message: 'Vendor account not approved. Please wait for admin approval.' 
+      });
+    }
+    return next();
+  }
+  return res.status(403).json({ message: 'Vendor access only' });
+};
+
+export { protect, adminOnly, vendorOnly, checkVendorApproval };
