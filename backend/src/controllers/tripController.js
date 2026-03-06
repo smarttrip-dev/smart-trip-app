@@ -17,10 +17,28 @@ const findTrip = (idParam, userId) => {
 // @desc  Get all trips for the logged-in user
 // @route GET /api/trips
 // @access Private
+// ⭐ MODERATE FIX #1: Pagination
 export const getUserTrips = async (req, res) => {
   try {
-    const trips = await Trip.find({ user: req.user._id }).sort({ createdAt: -1 });
-    res.json(trips.map(t => ({ ...t.toObject(), id: t.tripId || t._id.toString() })));
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const total = await Trip.countDocuments({ user: req.user._id });
+    const trips = await Trip.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      data: trips.map(t => ({ ...t.toObject(), id: t.tripId || t._id.toString() })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

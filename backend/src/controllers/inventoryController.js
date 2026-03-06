@@ -8,12 +8,31 @@ const getVendorForUser = (userId) => Vendor.findOne({ user: userId });
 // @desc    Get all inventory items for the logged-in vendor
 // @route   GET /api/inventory
 // @access  Private (vendor)
+// ⭐ MODERATE FIX #1: Pagination
 export const getInventoryItems = async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
     const vendor = await getVendorForUser(req.user._id);
     if (!vendor) return res.status(404).json({ message: 'Vendor profile not found' });
-    const items = await InventoryItem.find({ vendor: vendor._id }).sort({ createdAt: -1 });
-    res.json(items);
+
+    const total = await InventoryItem.countDocuments({ vendor: vendor._id });
+    const items = await InventoryItem.find({ vendor: vendor._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -208,15 +227,19 @@ export const removeImageFromItem = async (req, res) => {
 // @desc    Get public activities/inventory items (no auth required)
 // @route   GET /api/inventory/public
 // @access  Public
+// ⭐ MODERATE FIX #1: Pagination + Case-insensitive location matching
 export const getPublicActivities = async (req, res) => {
   try {
     const { location, type, maxPrice } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
     
     // Build filter object
     const filter = { isActive: true };
     
     if (location) {
-      // Case-insensitive location search
+      // ⭐ MODERATE FIX #3: Case-insensitive location search
       filter.location = { $regex: location, $options: 'i' };
     }
     
@@ -231,11 +254,15 @@ export const getPublicActivities = async (req, res) => {
       }
     }
     
+    // Get total count for pagination
+    const total = await InventoryItem.countDocuments(filter);
+    
     // Get items with vendor info
     let items = await InventoryItem.find(filter)
       .populate('vendor', 'name')
       .sort({ createdAt: -1 })
-      .limit(50);
+      .skip(skip)
+      .limit(limit);
     
     // Ensure images array is always returned (even if empty)
     items = items.map(item => ({
@@ -244,11 +271,16 @@ export const getPublicActivities = async (req, res) => {
     }));
     
     console.log('Public Activities Response:', items.length, 'items returned');
-    if (items.length > 0) {
-      console.log('First item images:', items[0].images);
-    }
     
-    res.json(items);
+    res.json({
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error in getPublicActivities:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

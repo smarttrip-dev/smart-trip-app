@@ -4,12 +4,29 @@ import Vendor from '../models/Vendor.js';
 import { createNotification } from './notificationController.js';
 
 // GET /api/bookings  — current user's bookings
+// ⭐ MODERATE FIX #1: Pagination
 export const getMyBookings = async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const total = await Booking.countDocuments({ user: req.user._id });
     const bookings = await Booking.find({ user: req.user._id })
       .populate('items.inventory', 'name type price images location')
-      .sort({ createdAt: -1 });
-    res.json(bookings);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -286,33 +303,66 @@ export const updateBookingStatus = async (req, res) => {
 };
 
 // GET /api/bookings/all  — admin: all bookings
+// ⭐ MODERATE FIX #1: Pagination
 export const getAllBookings = async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const total = await Booking.countDocuments();
     const bookings = await Booking.find()
       .populate('user', 'name email')
       .populate('items.inventory', 'name type price')
-      .sort({ createdAt: -1 });
-    res.json(bookings);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
 // GET /api/bookings/vendor  — vendor: only their bookings
+// ⭐ MODERATE FIX #1: Pagination
 export const getVendorBookings = async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
     const vendor = await Vendor.findOne({ user: req.user._id });
     if (!vendor) return res.status(404).json({ message: 'Vendor profile not found' });
 
     const inventoryItems = await InventoryItem.find({ vendor: vendor._id }).select('_id');
     const inventoryIds = inventoryItems.map(i => i._id);
 
+    const total = await Booking.countDocuments({ 'items.inventory': { $in: inventoryIds } });
     const bookings = await Booking.find({ 'items.inventory': { $in: inventoryIds } })
       .populate('user', 'name email phone')
       .populate('items.inventory', 'name type price')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.json(bookings);
+    res.json({
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
