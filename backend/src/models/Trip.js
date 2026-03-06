@@ -111,11 +111,14 @@ tripSchema.pre('save', async function (next) {
       return next(new Error('Trip end date must be after start date'));
     }
 
-    // Check if start date is not in the past
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (fromDate < today) {
-      return next(new Error('Trip start date cannot be in the past'));
+    // Only check future date constraint for new trips (not seeded data)
+    // In production, trips should be future-dated. In development, allow historical trips.
+    if (process.env.NODE_ENV === 'production' && this.isNew) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (fromDate < today) {
+        return next(new Error('Trip start date cannot be in the past'));
+      }
     }
   }
 

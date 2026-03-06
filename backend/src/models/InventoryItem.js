@@ -31,6 +31,10 @@ const inventoryItemSchema = new mongoose.Schema(
         },
         {
           validator: function (value) {
+            // Only validate against capacity if capacity is set
+            if (this.capacity === undefined || this.capacity === null) {
+              return true;
+            }
             return value <= this.capacity;
           },
           message: 'availableCount cannot exceed capacity',

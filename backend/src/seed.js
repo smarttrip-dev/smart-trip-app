@@ -708,7 +708,7 @@ async function seed() {
     { vendor: vendor2._id, name: 'Galle Fort & South Coast Day Tour', type: 'activity', description: 'Explore historic Galle Fort, sea turtle hatchery, and Unawatuna beach.', price: 11000, capacity: 12, availableCount: 10, location: 'Galle', amenities: ['Lunch', 'Guide', 'AC transport', 'Entrance fees'], images: ['https://images.unsplash.com/photo-1593553584634-b7a2b24d1f2c?w=800'] },
     
     // Vendor 3: Earl's Regency Hotel
-    { vendor: vendor3._id, name: 'Earl\'s Regency Hotel Room (Deluxe)', type: 'accommodation', description: 'Spacious deluxe room with mountain view overlooking Kandy city.', price: 16250, capacity: 2, availableCount: 5, location: 'Kandy', amenities: ['Free WiFi', 'Breakfast', 'Pool', 'Restaurant', 'Spa'], images: ['https://images.unsplash.com/photo-1631049307038-da0ec89d4b0c?w=800'] },
+    { vendor: vendor3._id, name: 'Earl\'s Regency Hotel Room (Deluxe)', type: 'accommodation', description: 'Spacious deluxe room with mountain view overlooking Kandy city.', price: 16250, capacity: 10, availableCount: 5, location: 'Kandy', amenities: ['Free WiFi', 'Breakfast', 'Pool', 'Restaurant', 'Spa'], images: ['https://images.unsplash.com/photo-1631049307038-da0ec89d4b0c?w=800'] },
     { vendor: vendor3._id, name: 'Earl\'s Regency Hotel Room (Suite)', type: 'accommodation', description: 'Luxury suite with private balcony and premium amenities.', price: 32500, capacity: 4, availableCount: 2, location: 'Kandy', amenities: ['Free WiFi', 'Breakfast', 'Pool', 'Restaurant', 'Spa', 'Butler service'], images: [] },
     
     // Vendor 4: Safari Jeep Rentals
@@ -729,14 +729,14 @@ async function seed() {
     
     // Vendor 8: Luxury Villas Galle
     { vendor: vendor8._id, name: 'Beachfront Villa with Pool (per night)', type: 'accommodation', description: 'Luxury 2-bedroom villa with private pool overlooking Galle Fort.', price: 35000, capacity: 6, availableCount: 3, location: 'Galle', amenities: ['Private pool', 'Beachfront', 'Chef service', 'WiFi', 'Spa'], images: ['https://images.unsplash.com/photo-1566073771259-6a8506edf56f?w=800'] },
-    { vendor: vendor8._id, name: 'Spa & Wellness Package (3 hours)', type: 'activity', description: 'Traditional Ayurvedic massage and wellness treatments at luxury spa.', price: 12000, capacity: 4, availableCount: 6, location: 'Galle', amenities: ['Ayurvedic massage', 'Herbal treatments', 'Steam room', 'Refreshments'], images: [] },
+    { vendor: vendor8._id, name: 'Spa & Wellness Package (3 hours)', type: 'activity', description: 'Traditional Ayurvedic massage and wellness treatments at luxury spa.', price: 12000, capacity: 10, availableCount: 6, location: 'Galle', amenities: ['Ayurvedic massage', 'Herbal treatments', 'Steam room', 'Refreshments'], images: [] },
     
     // Vendor 9: TravelMax Tours
     { vendor: vendor9._id, name: 'Complete Sri Lanka Tour (7D/6N)', type: 'package', description: 'Round-island comprehensive tour covering beaches, mountains, and heritage sites.', price: 125000, capacity: 8, availableCount: 5, location: 'Colombo', amenities: ['Accommodation', 'All meals', 'Transport', 'Guide', 'Entry tickets'], images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800'] },
     { vendor: vendor9._id, name: 'Flight Booking Assistant (per booking)', type: 'package', description: 'Expert assistance with international and domestic flight bookings.', price: 2500, capacity: 20, availableCount: 20, location: 'Colombo', amenities: ['Best price search', 'Visa advice', 'Travel insurance', '24/7 support'], images: [] },
     
     // Vendor 10: Beachside Cabanas
-    { vendor: vendor10._id, name: 'Beachfront Room (per night)', type: 'accommodation', description: 'Comfortable beachfront room with ocean view and direct beach access.', price: 14000, capacity: 2, availableCount: 8, location: 'Mirissa', amenities: ['Beach access', 'Breakfast', 'WiFi', 'Restaurant', 'Water sports'], images: ['https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800'] },
+    { vendor: vendor10._id, name: 'Beachfront Room (per night)', type: 'accommodation', description: 'Comfortable beachfront room with ocean view and direct beach access.', price: 14000, capacity: 10, availableCount: 8, location: 'Mirissa', amenities: ['Beach access', 'Breakfast', 'WiFi', 'Restaurant', 'Water sports'], images: ['https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800'] },
     { vendor: vendor10._id, name: 'Whale Watching & Whale Shark Tour', type: 'activity', description: 'Combined tour with morning whale watching and afternoon whale shark encounter.', price: 14500, capacity: 20, availableCount: 15, location: 'Mirissa', amenities: ['Expert guide', 'Breakfast & lunch', 'Life jacket', 'Photos'], images: [] },
   ];
   await InventoryItem.insertMany(inventoryData);

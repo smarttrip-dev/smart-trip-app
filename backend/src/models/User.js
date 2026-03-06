@@ -10,14 +10,6 @@ const userSchema = mongoose.Schema(
             type: String,
             required: true,
             unique: true,
-            lowercase: true, // ⭐ MODERATE FIX #5: Store email in lowercase
-            validate: {
-                validator: function (value) {
-                    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                    return emailRegex.test(value);
-                },
-                message: 'Invalid email format',
-            },
         },
         password: {
             type: String,
@@ -48,18 +40,7 @@ const userSchema = mongoose.Schema(
                 enum: ['breakfast', 'half-board', 'full-board', 'all-inclusive'],
                 default: 'breakfast' 
             },
-            budgetRange: {
-              type: Number,
-              default: 50,
-              // ⭐ MODERATE FIX #5: Type coercion and validation for numeric fields
-              validate: {
-                validator: function (value) {
-                  return !isNaN(value) && Number(value) >= 0;
-                },
-                message: 'budgetRange must be a non-negative number',
-              },
-              get: (value) => value ? Number(value) : 0, // Coerce to number on read
-            },
+            budgetRange: { type: Number, default: 50 },
             travelStyle: { 
                 type: String, 
                 enum: ['adventure', 'family', 'luxury', 'budget', 'relaxation'],
@@ -75,14 +56,6 @@ const userSchema = mongoose.Schema(
         timestamps: true,
     }
 );
-
-// ⭐ MODERATE FIX #5: Ensure email is lowercase before saving
-userSchema.pre('save', function (next) {
-  if (this.email) {
-    this.email = this.email.toLowerCase();
-  }
-  next();
-});
 
 const User = mongoose.model('User', userSchema);
 

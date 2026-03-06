@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Vendor from '../models/Vendor.js'; // ⭐ Import Vendor model
 
 const protect = async (req, res, next) => {
   let token;
@@ -31,14 +32,29 @@ const vendorOnly = (req, res, next) => {
 
 // ⭐ CRITICAL FIX #3: Vendor approval check
 // Prevents unapproved vendors from accessing protected endpoints
-const checkVendorApproval = (req, res, next) => {
+const checkVendorApproval = async (req, res, next) => {
   if (req.user && req.user.role === 'vendor') {
-    if (!req.user.isApproved) {
-      return res.status(403).json({ 
-        message: 'Vendor account not approved. Please wait for admin approval.' 
+    try {
+      const vendor = await Vendor.findOne({ user: req.user._id });
+      if (!vendor) {
+        return res.status(403).json({ 
+          message: 'Vendor profile not found. Please complete vendor registration.' 
+        });
+      }
+      if (vendor.status !== 'approved') {
+        return res.status(403).json({ 
+          message: `Vendor account status: ${vendor.status}. Please wait for admin approval.`,
+          status: vendor.status
+        });
+      }
+      req.vendor = vendor;
+      return next();
+    } catch (err) {
+      return res.status(500).json({ 
+        message: 'Server error checking vendor approval',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
       });
     }
-    return next();
   }
   return res.status(403).json({ message: 'Vendor access only' });
 };

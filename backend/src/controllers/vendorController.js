@@ -66,28 +66,10 @@ export const updateVendorProfile = async (req, res) => {
 // @desc    Get all vendors (admin)
 // @route   GET /api/vendors
 // @access  Private (admin)
-// ⭐ MODERATE FIX #1: Pagination
 export const getAllVendors = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
-    const skip = (page - 1) * limit;
-
-    const total = await Vendor.countDocuments();
-    const vendors = await Vendor.find()
-      .populate('user', 'name email')
-      .skip(skip)
-      .limit(limit);
-
-    res.json({
-      data: vendors,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
+    const vendors = await Vendor.find().populate('user', 'name email');
+    res.json(vendors);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
