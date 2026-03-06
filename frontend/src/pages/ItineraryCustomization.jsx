@@ -549,6 +549,12 @@ export default function ItineraryCustomization() {
     const budgetPerDay = tripBudgetInit / durationDays;
     const actBudgetLimit = budgetPerDay * 0.2; // Max 20% of daily budget for activities
     
+    // ── Debug: Log current state ──
+    console.log('=== filteredActivities Debug ===');
+    console.log('tripLocation:', tripLocation);
+    console.log('inventoryItems count:', inventoryItems.length);
+    console.log('availableActivities count:', availableActivities.length);
+    
     // ── Build activity source: prefer inventory items, fallback to config items ──
     let activitySource = [];
     
@@ -574,19 +580,48 @@ export default function ItineraryCustomization() {
           return matchesLocation && isAvailable && withinBudget;
         })
         .sort((a, b) => (a.price || 0) - (b.price || 0));
+      
+      console.log('Using inventory items. Filtered count:', activitySource.length);
+      if (activitySource.length > 0) {
+        console.log('Sample inventory item:', activitySource[0].name, 'Location:', activitySource[0].location);
+      }
     }
     
     // ── Fallback to config items if no inventory activities found ──
     if (activitySource.length === 0) {
-      activitySource = availableActivities
+      console.log('Falling back to config items. Available count before filter:', availableActivities.length);
+      
+      // IMPORTANT: Also filter config items by location
+      const locFilteredConfig = availableActivities
+        .filter(a => {
+          // Try to match location - be flexible with matching
+          const hasLocation = a.location || a.name;
+          const matchesLoc = !a.location || 
+            a.location.toLowerCase().includes(loc) ||
+            tripLocation.toLowerCase().includes(a.location?.toLowerCase() || '');
+          
+          console.log(`Checking config item: "${a.name}" - Location: "${a.location}" - Matches "${tripLocation}"?`, matchesLoc);
+          
+          return matchesLoc;
+        });
+      
+      console.log('Config items matching location:', locFilteredConfig.length);
+      
+      activitySource = locFilteredConfig
         .filter(a => (a.price || 0) <= actBudgetLimit)
         .sort((a, b) => (a.price || 0) - (b.price || 0));
+      
+      console.log('Final fallback count after budget filter:', activitySource.length);
     }
     
     // ── Apply category filter ──
     const filtered = activeCategory === 'All' 
       ? activitySource 
       : activitySource.filter(a => a.category === activeCategory || a.type === activeCategory);
+    
+    console.log('After category filter:', filtered.length);
+    console.log('Final filtered activities:', filtered.map(a => ({ name: a.name, location: a.location, category: a.category })));
+    console.log('=== End Debug ===\n');
     
     // ── Map to required format ──
     return filtered.map(item => ({
